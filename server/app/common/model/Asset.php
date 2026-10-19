@@ -16,7 +16,7 @@ class Asset extends BaseModel
     protected $hidden = ['delete_time'];
 
     protected $type = [
-        'project_id'      => 'integer',
+        'group_id'        => 'integer',
         'auto_detect'     => 'boolean',
         'auto_renew'      => 'boolean',
         'remind_overdue'  => 'boolean',
@@ -25,9 +25,9 @@ class Asset extends BaseModel
         'remind_channels' => 'array',
     ];
 
-    public function project()
+    public function group()
     {
-        return $this->belongsTo(Project::class, 'project_id');
+        return $this->belongsTo(Group::class, 'group_id');
     }
 
     public function offsets(): array

@@ -8,7 +8,7 @@ export default {
     default: '默认', reset: '恢复默认', preview: '预览', test: '测试', close: '关闭',
   },
   nav: {
-    dashboard: '概览', assets: '资产到期', tasks: '周期检查', channels: '通知渠道', templates: '通知模板',
+    dashboard: '概览', assets: '资产到期', tasks: '周期检查', groups: '信息分组', channels: '通知渠道', templates: '通知模板',
     notifications: '通知记录', settings: '个人设置', admin: '平台管理', adminOverview: '运营概览', adminUsers: '用户',
     adminTenants: '空间', adminPlans: '套餐', adminSettings: '系统设置', logout: '退出登录', theme: '切换主题',
   },
@@ -28,9 +28,9 @@ export default {
     },
     url: '管理地址', provider: '服务商', expire: '到期时间', daysLeft: '剩余', autoDetect: '自动探测到期时间',
     autoDetectHint: '定期通过 RDAP/WHOIS 或 TLS 握手获取到期时间，续费后自动更新',
-    price: '续费价格', currency: '币种', cycle: '续费周期', autoRenew: '已开启自动续费', project: '项目',
+    price: '续费价格', currency: '币种', cycle: '续费周期', autoRenew: '已开启自动续费', group: '分组',
     offsets: '提前提醒（天）', offsetsHint: '可多选或输入，例如 30、7、3、1、0', overdueRemind: '过期后每天提醒',
-    channels: '提醒渠道', channelsHint: '留空表示发送到全部渠道', detect: '立即检测', renew: '已续费',
+    channels: '提醒渠道', channelsHint: '留空则使用所在分组的渠道', detect: '立即检测', renew: '已续费',
     renewTip: '按续费周期顺延到期时间', ack: '本期已处理', snooze: '稍后提醒', lastDetect: '上次检测',
     detectFailed: '检测失败', acked: '已处理', keyword: '名称 / 标识 / 服务商', detectInfo: '检测详情',
     types: { domain: '域名', ssl: 'SSL 证书', server: '服务器', subscription: '订阅服务', license: '软件授权', account: '账号', other: '其他' },
@@ -50,6 +50,13 @@ export default {
     everyN: '每 {n} {unit}', wd: { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' },
     overdue: '已逾期', snoozed: '已延后', source: '来源',
   },
+  group: {
+    title: '信息分组', add: '新建分组', desc: '按用途或客户把资产和检查项分组。每个分组可以单独指定通知渠道（Bot），不设置时使用默认分组的渠道。',
+    default: '默认分组', defaultTip: '系统默认分组，不能删除；新建的资产和检查项默认放在这里', name: '分组名称', color: '颜色',
+    description: '说明', channels: '通知渠道（Bot）', channelsHint: '可多选。留空时：普通分组使用默认分组的渠道，默认分组发送到你的全部渠道',
+    inheritDefault: '使用默认分组的渠道', allChannels: '发送到全部渠道', assets: '资产', tasks: '检查项', manageChannels: '管理通知渠道',
+    deleteTip: '删除后，组内的资产和检查项会移到默认分组。', notMine: '其他成员的渠道',
+  },
   channel: {
     title: '通知渠道', add: '添加渠道', mode: 'Bot 类型', system: '平台 Bot', systemDesc: '使用平台提供的 Bot（{\'@\'}{name}），无需配置',
     custom: '我自己的 Bot', customDesc: '使用你通过 {\'@\'}BotFather 创建的 Bot，消息完全由你的 Bot 发送', botToken: 'Bot Token',
@@ -66,7 +73,7 @@ export default {
     scenes: { asset_expire: '资产到期提醒', task_due: '周期检查提醒' }, variables: '可用变量（点击插入）', custom: '已自定义',
     vars: {
       name: '名称', type: '类型', identifier: '标识', provider: '服务商', expire_date: '到期日期', days_left: '剩余天数',
-      status_text: '状态文案', price: '价格', currency: '币种', url: '链接', notes: '备注', project: '项目', title: '标题',
+      status_text: '状态文案', price: '价格', currency: '币种', url: '链接', notes: '备注', group: '分组', title: '标题',
       description: '说明', due_time: '到期时间', frequency: '频率', steps: '步骤',
     },
   },

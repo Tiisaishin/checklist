@@ -2,6 +2,7 @@
 namespace app\api\controller;
 
 use app\common\controller\ApiController;
+use app\common\model\Group as GroupModel;
 use app\common\detector\DomainDetector;
 use app\common\detector\SslDetector;
 use app\common\exception\ApiException;
@@ -23,8 +24,8 @@ class Asset extends ApiController
         if ($type) {
             $query->where('type', $type);
         }
-        if ($projectId = (int) $this->request->param('project_id')) {
-            $query->where('project_id', $projectId);
+        if ($groupId = (int) $this->request->param('group_id')) {
+            $query->where('group_id', $groupId);
         }
         $query->where('status', $this->request->param('status', 'active'));
         if ($keyword = trim((string) $this->request->param('keyword'))) {
@@ -53,7 +54,7 @@ class Asset extends ApiController
     {
         QuotaService::ensure(AuthContext::tenant(), 'assets');
         $data = $this->input();
-        $data += ['tenant_id' => $this->tenantId(), 'user_id' => AuthContext::userId()];
+        $data += ['tenant_id' => $this->tenantId(), 'user_id' => AuthContext::userId(), 'group_id' => GroupModel::resolveId($this->tenantId(), 0)];
 
         $asset = AssetModel::find(AssetModel::create($data)->id);
         if ($asset->auto_detect && in_array($asset->type, AssetModel::DETECTABLE, true)) {
@@ -124,7 +125,7 @@ class Asset extends ApiController
             'identifier'      => 'max:255',
             'url'             => 'max:500',
             'provider'        => 'max:128',
-            'project_id'      => 'integer',
+            'group_id'        => 'integer',
             'expire_time'     => 'max:40',
             'auto_detect'     => 'boolean',
             'price'           => 'float|egt:0',
@@ -166,6 +167,9 @@ class Asset extends ApiController
         }
         if (isset($data['currency'])) {
             $data['currency'] = strtoupper($data['currency']);
+        }
+        if (array_key_exists('group_id', $data)) {
+            $data['group_id'] = GroupModel::resolveId($this->tenantId(), (int) $data['group_id']);
         }
         return $data;
     }

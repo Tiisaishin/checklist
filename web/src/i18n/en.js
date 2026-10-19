@@ -8,7 +8,7 @@ export default {
     default: 'Default', reset: 'Reset to default', preview: 'Preview', test: 'Test', close: 'Close',
   },
   nav: {
-    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', channels: 'Channels', templates: 'Templates',
+    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', groups: 'Groups', channels: 'Channels', templates: 'Templates',
     notifications: 'Notification log', settings: 'Settings', admin: 'Platform', adminOverview: 'Overview', adminUsers: 'Users',
     adminTenants: 'Workspaces', adminPlans: 'Plans', adminSettings: 'System settings', logout: 'Sign out', theme: 'Toggle theme',
   },
@@ -28,9 +28,9 @@ export default {
     },
     url: 'Console URL', provider: 'Provider', expire: 'Expires', daysLeft: 'Left', autoDetect: 'Auto-detect expiry',
     autoDetectHint: 'Periodically checks RDAP/WHOIS or the TLS certificate and updates after renewal',
-    price: 'Renewal price', currency: 'Currency', cycle: 'Renewal cycle', autoRenew: 'Auto-renew is on', project: 'Project',
+    price: 'Renewal price', currency: 'Currency', cycle: 'Renewal cycle', autoRenew: 'Auto-renew is on', group: 'Group',
     offsets: 'Remind before (days)', offsetsHint: 'Select or type, e.g. 30, 7, 3, 1, 0', overdueRemind: 'Remind daily after expiry',
-    channels: 'Channels', channelsHint: 'Empty means all channels', detect: 'Check now', renew: 'Renewed',
+    channels: 'Channels', channelsHint: 'Empty = use the group channels', detect: 'Check now', renew: 'Renewed',
     renewTip: 'Extend expiry by one renewal cycle', ack: 'Handled', snooze: 'Snooze', lastDetect: 'Last checked',
     detectFailed: 'Check failed', acked: 'Handled', keyword: 'Name / identifier / provider', detectInfo: 'Detection details',
     types: { domain: 'Domain', ssl: 'SSL certificate', server: 'Server', subscription: 'Subscription', license: 'License', account: 'Account', other: 'Other' },
@@ -50,6 +50,13 @@ export default {
     everyN: 'Every {n} {unit}', wd: { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun' },
     overdue: 'Overdue', snoozed: 'Snoozed', source: 'Source',
   },
+  group: {
+    title: 'Groups', add: 'New group', desc: 'Organize assets and checks by purpose or client. Each group can send reminders through its own channels (bots); otherwise it uses the default group\'s channels.',
+    default: 'Default', defaultTip: 'The built-in default group cannot be deleted; new items go here by default', name: 'Group name', color: 'Color',
+    description: 'Description', channels: 'Channels (bots)', channelsHint: 'Multiple allowed. Empty: normal groups use the default group\'s channels; the default group sends to all your channels',
+    inheritDefault: 'Uses default group channels', allChannels: 'Sends to all channels', assets: 'Assets', tasks: 'Checks', manageChannels: 'Manage channels',
+    deleteTip: 'Assets and checks in this group will be moved to the default group.', notMine: 'Another member\'s channel',
+  },
   channel: {
     title: 'Channels', add: 'Add channel', mode: 'Bot', system: 'Platform bot', systemDesc: 'Use the platform bot ({\'@\'}{name}), no setup needed',
     custom: 'My own bot', customDesc: 'Use a bot you created with {\'@\'}BotFather; messages are sent by your bot', botToken: 'Bot token',
@@ -66,7 +73,7 @@ export default {
     scenes: { asset_expire: 'Asset expiry', task_due: 'Recurring check' }, variables: 'Variables (click to insert)', custom: 'Customized',
     vars: {
       name: 'Name', type: 'Type', identifier: 'Identifier', provider: 'Provider', expire_date: 'Expiry date', days_left: 'Days left',
-      status_text: 'Status text', price: 'Price', currency: 'Currency', url: 'URL', notes: 'Notes', project: 'Project', title: 'Title',
+      status_text: 'Status text', price: 'Price', currency: 'Currency', url: 'URL', notes: 'Notes', group: 'Group', title: 'Title',
       description: 'Description', due_time: 'Due time', frequency: 'Frequency', steps: 'Steps',
     },
   },

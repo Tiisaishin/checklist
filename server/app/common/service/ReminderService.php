@@ -15,7 +15,7 @@ use DateTimeImmutable;
  *       剩余天数命中提前量，或处于提醒窗口内但本周期还没提醒过，或已过期（remind_overdue）时发送，每天最多一次。
  * 检查项：在检查项自身的时间点之后，按相同规则发送。
  *
- * 接收人：资产/检查项所属租户内的有效渠道（可通过 remind_channels 指定子集），模板、语言、时区取渠道所属用户。
+ * 接收人：见 ChannelRouter（条目 > 分组 > 默认分组 > 全部渠道），模板、语言、时区取渠道所属用户。
  */
 class ReminderService
 {
@@ -23,11 +23,13 @@ class ReminderService
     private array $users = [];
     /** @var array<int, Channel[]> */
     private array $channelsByTenant = [];
+    private ChannelRouter $router;
 
     public function run(?DateTimeImmutable $now = null): int
     {
-        $now  = $now ?: new DateTimeImmutable('now', TimeHelper::utc());
-        $sent = 0;
+        $now          = $now ?: new DateTimeImmutable('now', TimeHelper::utc());
+        $sent         = 0;
+        $this->router = new ChannelRouter();
 
         $this->loadChannels();
         if (!$this->channelsByTenant) {
@@ -77,11 +79,12 @@ class ReminderService
     }
 
     /** @return Channel[] */
-    private function recipients(int $tenantId, ?array $only): array
+    private function recipients(Asset|Task $item): array
     {
-        $list = $this->channelsByTenant[$tenantId] ?? [];
-        if ($only) {
-            $only = array_map('intval', $only);
+        $tenantId = (int) $item->tenant_id;
+        $list     = $this->channelsByTenant[$tenantId] ?? [];
+        $only     = $this->router->resolve($tenantId, (int) $item->group_id, $item->remind_channels);
+        if ($only !== null) {
             $list = array_filter($list, fn ($c) => in_array((int) $c->id, $only, true));
         }
         return $list;
@@ -102,7 +105,7 @@ class ReminderService
 
         $offsets = $asset->offsets();
         $sent    = 0;
-        foreach ($this->recipients($asset->tenant_id, $asset->remind_channels) as $channel) {
+        foreach ($this->recipients($asset) as $channel) {
             $user  = $this->users[$channel->user_id];
             $tz    = TimeHelper::tz($user->timezone);
             $local = $now->setTimezone($tz);
@@ -148,7 +151,7 @@ class ReminderService
 
         $offsets = $task->offsets() ?: [0];
         $sent    = 0;
-        foreach ($this->recipients($task->tenant_id, $task->remind_channels) as $channel) {
+        foreach ($this->recipients($task) as $channel) {
             $user  = $this->users[$channel->user_id];
             $tz    = TimeHelper::tz($user->timezone);
             $local = $now->setTimezone($tz);

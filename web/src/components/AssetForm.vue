@@ -26,9 +26,8 @@
 
         <n-grid :cols="2" :x-gap="12">
           <n-gi>
-            <n-form-item :label="t('asset.project')">
-              <n-select v-model:value="form.project_id" :options="projectOptions" clearable filterable tag
-                :placeholder="t('common.optional')" @create="createProjectOption" />
+            <n-form-item :label="t('asset.group')">
+              <n-select v-model:value="form.group_id" :options="groupOptions" filterable tag @create="createGroupOption" />
             </n-form-item>
           </n-gi>
           <n-gi>
@@ -94,8 +93,8 @@ import { useI18n } from 'vue-i18n'
 import { api, message } from '../utils/api'
 import { toLocalInput, toServer } from '../utils/time'
 
-const props = defineProps({ show: Boolean, asset: Object, projects: Array, channels: Array })
-const emit = defineEmits(['update:show', 'saved', 'projects-changed'])
+const props = defineProps({ show: Boolean, asset: Object, groups: Array, channels: Array })
+const emit = defineEmits(['update:show', 'saved', 'groups-changed'])
 const { t } = useI18n()
 
 const types = ['domain', 'ssl', 'server', 'subscription', 'license', 'account', 'other']
@@ -104,7 +103,7 @@ const formRef = ref()
 const saving = ref(false)
 
 const empty = () => ({
-  type: 'domain', name: '', identifier: '', auto_detect: true, expire_local: null, project_id: null, provider: '', url: '',
+  type: 'domain', name: '', identifier: '', auto_detect: true, expire_local: null, group_id: null, provider: '', url: '',
   price: null, currency: 'USD', renew_cycle: 'yearly', auto_renew: false, offsets: ['30', '7', '3', '1', '0'],
   remind_overdue: true, remind_channels: [], notes: '',
 })
@@ -113,11 +112,12 @@ const form = reactive(empty())
 watch(() => props.show, (v) => {
   if (!v) return
   Object.assign(form, empty())
+  form.group_id = (props.groups || []).find((g) => g.is_default)?.id ?? null
   const a = props.asset
   if (a) {
     Object.assign(form, {
       type: a.type, name: a.name, identifier: a.identifier, auto_detect: a.auto_detect, expire_local: toLocalInput(a.expire_time),
-      project_id: a.project_id || null, provider: a.provider, url: a.url, price: a.price || null, currency: a.currency,
+      group_id: a.group_id || form.group_id, provider: a.provider, url: a.url, price: a.price || null, currency: a.currency,
       renew_cycle: a.renew_cycle, auto_renew: a.auto_renew, offsets: (a.remind_offsets || '').split(',').filter((x) => x !== ''),
       remind_overdue: a.remind_overdue, remind_channels: a.remind_channels || [], notes: a.notes || '',
     })
@@ -130,7 +130,7 @@ const typeOptions = computed(() => types.map((v) => ({ value: v, label: t('asset
 const cycleOptions = computed(() => ['monthly', 'quarterly', 'yearly', 'once'].map((v) => ({ value: v, label: t('asset.cycles.' + v) })))
 const currencyOptions = ['CNY', 'USD', 'EUR', 'HKD', 'JPY', 'GBP'].map((v) => ({ value: v, label: v }))
 const offsetOptions = ['90', '60', '30', '14', '7', '3', '1', '0'].map((v) => ({ value: v, label: v }))
-const projectOptions = computed(() => (props.projects || []).map((p) => ({ value: p.id, label: p.name })))
+const groupOptions = computed(() => (props.groups || []).map((p) => ({ value: p.id, label: p.name })))
 const channelOptions = computed(() => (props.channels || []).map((c) => ({ value: c.id, label: c.name + (c.chat_title ? ` · ${c.chat_title}` : '') })))
 
 const rules = computed(() => ({
@@ -142,10 +142,10 @@ const rules = computed(() => ({
   },
 }))
 
-async function createProjectOption(label) {
-  const p = await api.post('/api/projects', { name: label })
-  emit('projects-changed')
-  form.project_id = p.id
+async function createGroupOption(label) {
+  const p = await api.post('/api/groups', { name: label })
+  emit('groups-changed')
+  form.group_id = p.id
   return { label: p.name, value: p.id }
 }
 
@@ -155,7 +155,7 @@ async function submit() {
   try {
     const payload = {
       type: form.type, name: form.name.trim(), identifier: form.identifier.trim(), auto_detect: detectable.value && form.auto_detect,
-      expire_time: toServer(form.expire_local), project_id: typeof form.project_id === 'number' ? form.project_id : 0,
+      expire_time: toServer(form.expire_local), group_id: typeof form.group_id === 'number' ? form.group_id : 0,
       provider: form.provider, url: form.url, price: form.price || 0, currency: form.currency, renew_cycle: form.renew_cycle,
       auto_renew: form.auto_renew, remind_offsets: form.offsets.join(','), remind_overdue: form.remind_overdue,
       remind_channels: form.remind_channels, notes: form.notes,

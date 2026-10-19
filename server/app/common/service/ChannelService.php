@@ -2,7 +2,10 @@
 namespace app\common\service;
 
 use app\common\exception\ApiException;
+use app\common\model\Asset;
 use app\common\model\Channel;
+use app\common\model\Group;
+use app\common\model\Task;
 use app\common\model\User;
 use app\common\telegram\BotRegistry;
 use app\common\telegram\TelegramApi;
@@ -127,6 +130,16 @@ class ChannelService
                 try {
                     (new TelegramApi($cfg['bot_token'], 10))->deleteWebhook();
                 } catch (Throwable) {
+                }
+            }
+        }
+        // 从分组与条目的渠道设置中移除
+        $id = (int) $channel->id;
+        foreach ([Group::class, Asset::class, Task::class] as $class) {
+            foreach ($class::where('tenant_id', $channel->tenant_id)->whereNotNull('remind_channels')->select() as $row) {
+                $ids = array_map('intval', (array) $row->remind_channels);
+                if (in_array($id, $ids, true)) {
+                    $row->save(['remind_channels' => array_values(array_diff($ids, [$id])) ?: null]);
                 }
             }
         }

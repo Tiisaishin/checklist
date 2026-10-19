@@ -11,6 +11,13 @@ return [
     'tenant_unavailable'     => '空间不可用',
     'personal_space'         => '{:name} 的空间',
 
+    'default_group'          => '默认分组',
+    'default_group_locked'   => '默认分组不能删除',
+    'field_group_id'         => '分组',
+    'field_remind_channels'  => '通知渠道',
+    'field_color'            => '颜色',
+    'field_description'      => '说明',
+
     // 账号
     'email_taken'            => '该邮箱已注册',
     'too_many_attempts'      => '尝试次数过多，请 10 分钟后再试',

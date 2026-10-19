@@ -15,7 +15,7 @@ class Task extends BaseModel
     protected $hidden = ['delete_time'];
 
     protected $type = [
-        'project_id'      => 'integer',
+        'group_id'        => 'integer',
         'interval'        => 'integer',
         'by_monthday'     => 'integer',
         'by_month'        => 'integer',
@@ -24,9 +24,9 @@ class Task extends BaseModel
         'steps'           => 'array',
     ];
 
-    public function project()
+    public function group()
     {
-        return $this->belongsTo(Project::class, 'project_id');
+        return $this->belongsTo(Group::class, 'group_id');
     }
 
     public function offsets(): array

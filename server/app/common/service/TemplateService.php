@@ -2,7 +2,7 @@
 namespace app\common\service;
 
 use app\common\model\Asset;
-use app\common\model\Project;
+use app\common\model\Group;
 use app\common\model\Task;
 use app\common\model\Template;
 use app\common\model\User;
@@ -14,8 +14,8 @@ use DateTimeImmutable;
 class TemplateService
 {
     public const VARIABLES = [
-        'asset_expire' => ['name', 'type', 'identifier', 'provider', 'expire_date', 'days_left', 'status_text', 'price', 'currency', 'url', 'notes', 'project'],
-        'task_due'     => ['title', 'description', 'due_time', 'days_left', 'status_text', 'frequency', 'project', 'steps'],
+        'asset_expire' => ['name', 'type', 'identifier', 'provider', 'expire_date', 'days_left', 'status_text', 'price', 'currency', 'url', 'notes', 'group'],
+        'task_due'     => ['title', 'description', 'due_time', 'days_left', 'status_text', 'frequency', 'group', 'steps'],
     ];
 
     public static function defaultContent(string $scene, string $locale): string
@@ -80,7 +80,7 @@ class TemplateService
             'currency'    => $asset->currency,
             'url'         => $asset->url,
             'notes'       => (string) $asset->notes,
-            'project'     => $asset->project_id ? (string) Project::where('id', $asset->project_id)->value('name') : '',
+            'group'       => $asset->group_id ? (string) Group::where('id', $asset->group_id)->value('name') : '',
         ];
     }
 
@@ -99,7 +99,7 @@ class TemplateService
             'days_left'   => $days,
             'status_text' => self::statusText($days, $locale),
             'frequency'   => self::frequencyText($task, $locale),
-            'project'     => $task->project_id ? (string) Project::where('id', $task->project_id)->value('name') : '',
+            'group'       => $task->group_id ? (string) Group::where('id', $task->group_id)->value('name') : '',
             'steps'       => implode("\n", $steps),
         ];
     }
@@ -118,12 +118,12 @@ class TemplateService
                 'name' => 'example.com', 'type' => trans('asset_type_domain', [], $locale), 'identifier' => 'example.com',
                 'provider' => 'Cloudflare', 'expire_date' => date('Y-m-d', strtotime('+7 days')), 'days_left' => 7,
                 'status_text' => self::statusText(7, $locale), 'price' => '10.44 USD', 'currency' => 'USD',
-                'url' => 'https://dash.cloudflare.com', 'notes' => '', 'project' => 'Blog',
+                'url' => 'https://dash.cloudflare.com', 'notes' => '', 'group' => 'Blog',
             ]
             : [
                 'title' => trans('sample_task_title', [], $locale), 'description' => '', 'due_time' => date('Y-m-d') . ' 09:00',
                 'days_left' => 0, 'status_text' => self::statusText(0, $locale), 'frequency' => trans('freq_weekly', [], $locale),
-                'project' => 'Blog', 'steps' => "▫️ df -h\n▫️ backup log",
+                'group' => 'Blog', 'steps' => "▫️ df -h\n▫️ backup log",
             ];
     }
 }

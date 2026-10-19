@@ -20,10 +20,10 @@ Route::group(function () {
     Route::put('tenant', 'Tenant/update');
     Route::post('tenant/switch', 'Tenant/switch');
 
-    Route::get('projects', 'Project/index');
-    Route::post('projects', 'Project/save');
-    Route::put('projects/:id', 'Project/update');
-    Route::delete('projects/:id', 'Project/delete');
+    Route::get('groups', 'Group/index');
+    Route::post('groups', 'Group/save');
+    Route::put('groups/:id', 'Group/update');
+    Route::delete('groups/:id', 'Group/delete');
 
     Route::get('assets', 'Asset/index');
     Route::post('assets', 'Asset/save');

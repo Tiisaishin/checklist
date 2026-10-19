@@ -2,6 +2,7 @@
 namespace app\common\service;
 
 use app\common\exception\ApiException;
+use app\common\model\Group;
 use app\common\model\Plan;
 use app\common\model\Tenant;
 use app\common\model\TenantUser;
@@ -43,6 +44,7 @@ class AuthService
                 'status'   => 1,
             ]);
             TenantUser::create(['tenant_id' => $tenant->id, 'user_id' => $user->id, 'role' => 'owner']);
+            Group::defaultFor((int) $tenant->id, $locale);
             $user->save(['current_tenant_id' => $tenant->id]);
 
             return $user;

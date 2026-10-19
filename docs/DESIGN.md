@@ -108,10 +108,10 @@ docker-compose.yml
 tenants(id, name, plan_id, locale, timezone, ...)
 users(id, email, password, locale, timezone, totp_secret, ...)
 tenant_users(tenant_id, user_id, role)
-projects(id, tenant_id, name, color)
-assets(id, tenant_id, project_id, type, name, identifier, expire_at,
+item_groups(id, tenant_id, name, description, color, is_default, remind_channels JSON)
+assets(id, tenant_id, group_id, type, name, identifier, expire_at,
        auto_detect, detect_meta JSON, price, currency, renew_cycle, notes, ...)
-tasks(id, tenant_id, project_id, title, rrule, mode[fixed|after_done],
+tasks(id, tenant_id, group_id, title, rrule, mode[fixed|after_done],
       next_due_at, steps JSON, ...)
 task_runs(id, task_id, user_id, done_at, note, attachments)
 reminder_rules(id, tenant_id, target_type, target_id, offsets JSON,
@@ -143,5 +143,6 @@ vault_access_logs / audit_logs / plans / subscriptions / api_tokens
 - [x] 套餐配额、平台后台（用户、空间、套餐、系统设置）
 - [x] 中英文、用户时区
 - [x] Docker Compose 部署
+- [x] 信息分组：默认分组 + 每个分组单独指定通知渠道（Bot）
 - [ ] 团队成员邀请（数据结构已支持，缺邀请流程与界面）
 - [ ] 保险箱、更多通知渠道、日历/iCal、导入导出（v2）

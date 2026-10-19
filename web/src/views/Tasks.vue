@@ -12,15 +12,15 @@
         <n-radio-button value="">{{ t('common.all') }}</n-radio-button>
         <n-radio-button v-for="f in freqs" :key="f" :value="f">{{ t('task.freqText.' + f) }}</n-radio-button>
       </n-radio-group>
-      <n-select v-model:value="filters.project_id" :options="projectOptions" clearable size="small" style="width: 160px" :placeholder="t('asset.project')" @update:value="reload" />
+      <n-select v-model:value="filters.group_id" :options="groupOptions" clearable size="small" style="width: 160px" :placeholder="t('asset.group')" @update:value="reload" />
       <n-input v-model:value="filters.keyword" size="small" clearable style="width: 200px" :placeholder="t('common.search')" @keyup.enter="reload" @clear="reload" />
       <n-select v-model:value="filters.status" size="small" style="width: 110px" :options="statusOptions" @update:value="reload" />
     </div>
 
     <n-data-table remote :columns="columns" :data="rows" :loading="loading" :pagination="pagination" :row-key="(r) => r.id"
-      :scroll-x="860" size="small" @update:page="changePage" />
+      :scroll-x="990" size="small" @update:page="changePage" />
 
-    <TaskForm v-model:show="formVisible" :task="editing" :projects="projects" :channels="channels" @saved="onSaved" @projects-changed="loadProjects" />
+    <TaskForm v-model:show="formVisible" :task="editing" :groups="groups" :channels="channels" @saved="onSaved" @groups-changed="loadGroups" />
 
     <n-modal v-model:show="doneVisible" preset="dialog" :title="doneTask?.title" :positive-text="t('task.done')" :negative-text="t('common.cancel')" @positive-click="confirmDone">
       <n-checkbox-group v-if="doneTask?.steps?.length" v-model:value="checkedSteps" style="margin: 8px 0 12px">
@@ -38,6 +38,7 @@
 <script setup>
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { NButton, NDropdown, NIcon, NTag } from 'naive-ui'
 import { AddOutline, EllipsisHorizontal } from '@vicons/ionicons5'
 import { api, confirmDelete, message } from '../utils/api'
@@ -45,16 +46,17 @@ import { fmt } from '../utils/time'
 import { useAuth } from '../stores/auth'
 import DaysTag from '../components/DaysTag.vue'
 import TaskForm from '../components/TaskForm.vue'
+import GroupTag from '../components/GroupTag.vue'
 import { frequencyText } from '../utils/task'
 
 const { t } = useI18n()
 const auth = useAuth()
 const freqs = ['daily', 'weekly', 'monthly', 'yearly']
-const filters = reactive({ freq: '', project_id: null, keyword: '', status: 'active' })
+const filters = reactive({ freq: '', group_id: Number(useRoute().query.group_id) || null, keyword: '', status: 'active' })
 const rows = ref([])
 const loading = ref(false)
 const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 })
-const projects = ref([])
+const groups = ref([])
 const channels = ref([])
 const formVisible = ref(false)
 const editing = ref(null)
@@ -65,7 +67,7 @@ const checkedSteps = ref([])
 const runsVisible = ref(false)
 const runs = ref([])
 
-const projectOptions = computed(() => projects.value.map((p) => ({ label: p.name, value: p.id })))
+const groupOptions = computed(() => groups.value.map((p) => ({ label: p.name, value: p.id })))
 const statusOptions = computed(() => [
   { label: t('common.active'), value: 'active' },
   { label: t('common.archived'), value: 'archived' },
@@ -78,6 +80,10 @@ const columns = computed(() => [
       h('div', { style: 'font-weight:500' }, r.title),
       r.steps?.length ? h('div', { class: 'muted' }, `${r.steps.length} ${t('task.steps')}`) : null,
     ]),
+  },
+  {
+    title: t('asset.group'), key: 'group_id', width: 130,
+    render: (r) => h(GroupTag, { group: groups.value.find((g) => g.id === r.group_id) }),
   },
   { title: t('task.freq'), key: 'freq', width: 170, render: (r) => frequencyText(r, t) },
   {
@@ -163,11 +169,11 @@ async function load() {
 }
 function reload() { pagination.page = 1; load() }
 function changePage(p) { pagination.page = p; load() }
-async function loadProjects() { projects.value = await api.get('/api/projects') }
+async function loadGroups() { groups.value = await api.get('/api/groups') }
 
 onMounted(async () => {
   load()
-  loadProjects()
+  loadGroups()
   channels.value = (await api.get('/api/channels')).items
 })
 </script>

@@ -2,6 +2,7 @@
 namespace app\api\controller;
 
 use app\common\controller\ApiController;
+use app\common\model\Group as GroupModel;
 use app\common\model\Task as TaskModel;
 use app\common\model\TaskRun;
 use app\common\service\AssetService;
@@ -20,8 +21,8 @@ class Task extends ApiController
         $query = TaskModel::where('tenant_id', $this->tenantId())
             ->where('status', $this->request->param('status', 'active'));
 
-        if ($projectId = (int) $this->request->param('project_id')) {
-            $query->where('project_id', $projectId);
+        if ($groupId = (int) $this->request->param('group_id')) {
+            $query->where('group_id', $groupId);
         }
         if ($freq = $this->request->param('freq')) {
             $query->where('freq', $freq);
@@ -50,6 +51,7 @@ class Task extends ApiController
         $data = $this->input() + [
             'tenant_id' => $this->tenantId(),
             'user_id'   => AuthContext::userId(),
+            'group_id'  => GroupModel::resolveId($this->tenantId(), 0),
             'freq'      => 'daily',
             'interval'  => 1,
             'mode'      => 'fixed',
@@ -121,7 +123,7 @@ class Task extends ApiController
         $data = $this->validated([
             'title'           => 'require|max:191',
             'description'     => 'max:5000',
-            'project_id'      => 'integer',
+            'group_id'        => 'integer',
             'freq'            => 'require|in:' . implode(',', TaskModel::FREQS),
             'interval'        => 'integer|between:1,365',
             'by_weekday'      => 'max:32',
@@ -155,6 +157,9 @@ class Task extends ApiController
         }
         if (isset($data['remind_overdue'])) {
             $data['remind_overdue'] = (int) filter_var($data['remind_overdue'], FILTER_VALIDATE_BOOLEAN);
+        }
+        if (array_key_exists('group_id', $data)) {
+            $data['group_id'] = GroupModel::resolveId($this->tenantId(), (int) $data['group_id']);
         }
         return $data;
     }

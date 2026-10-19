@@ -10,6 +10,13 @@ return [
     'tenant_unavailable'     => 'Workspace unavailable',
     'personal_space'         => "{:name}'s workspace",
 
+    'default_group'          => 'Default',
+    'default_group_locked'   => 'The default group cannot be deleted',
+    'field_group_id'         => 'Group',
+    'field_remind_channels'  => 'Channels',
+    'field_color'            => 'Color',
+    'field_description'      => 'Description',
+
     'email_taken'            => 'This email is already registered',
     'too_many_attempts'      => 'Too many attempts, try again in 10 minutes',
     'login_failed'           => 'Incorrect email or password',

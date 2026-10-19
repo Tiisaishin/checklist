@@ -62,8 +62,8 @@
           <n-input v-model:value="form.description" type="textarea" :autosize="{ minRows: 2, maxRows: 6 }" />
         </n-form-item>
 
-        <n-form-item :label="t('asset.project')">
-          <n-select v-model:value="form.project_id" :options="projectOptions" clearable filterable tag :placeholder="t('common.optional')" @create="createProjectOption" />
+        <n-form-item :label="t('asset.group')">
+          <n-select v-model:value="form.group_id" :options="groupOptions" filterable tag @create="createGroupOption" />
         </n-form-item>
 
         <n-divider style="margin: 4px 0 12px" />
@@ -95,8 +95,8 @@ import { api, message } from '../utils/api'
 import { today } from '../utils/time'
 import { weekdayName } from '../utils/task'
 
-const props = defineProps({ show: Boolean, task: Object, projects: Array, channels: Array })
-const emit = defineEmits(['update:show', 'saved', 'projects-changed'])
+const props = defineProps({ show: Boolean, task: Object, groups: Array, channels: Array })
+const emit = defineEmits(['update:show', 'saved', 'groups-changed'])
 const { t } = useI18n()
 const drawerWidth = Math.min(520, window.innerWidth)
 const formRef = ref()
@@ -104,19 +104,20 @@ const saving = ref(false)
 
 const empty = () => ({
   title: '', description: '', freq: 'daily', interval: 1, by_weekday: [], by_monthday: 0, by_month: 0, time_of_day: '09:00',
-  start_date: today(), mode: 'fixed', steps: [], project_id: null, offsets: ['0'], remind_overdue: true, remind_channels: [],
+  start_date: today(), mode: 'fixed', steps: [], group_id: null, offsets: ['0'], remind_overdue: true, remind_channels: [],
 })
 const form = reactive(empty())
 
 watch(() => props.show, (v) => {
   if (!v) return
   Object.assign(form, empty())
+  form.group_id = (props.groups || []).find((g) => g.is_default)?.id ?? null
   const x = props.task
   if (x) {
     Object.assign(form, {
       title: x.title, description: x.description || '', freq: x.freq, interval: x.interval, mode: x.mode,
       by_weekday: String(x.by_weekday || '').split(',').filter(Boolean).map(Number), by_monthday: x.by_monthday, by_month: x.by_month,
-      time_of_day: x.time_of_day, start_date: x.start_date, steps: x.steps || [], project_id: x.project_id || null,
+      time_of_day: x.time_of_day, start_date: x.start_date, steps: x.steps || [], group_id: x.group_id || form.group_id,
       offsets: String(x.remind_offsets || '0').split(',').filter((s) => s !== ''), remind_overdue: x.remind_overdue,
       remind_channels: x.remind_channels || [],
     })
@@ -130,14 +131,14 @@ const monthdayOptions = computed(() => [
   ...Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: String(i + 1) })),
 ])
 const offsetOptions = ['30', '14', '7', '3', '1', '0'].map((v) => ({ value: v, label: v }))
-const projectOptions = computed(() => (props.projects || []).map((p) => ({ value: p.id, label: p.name })))
+const groupOptions = computed(() => (props.groups || []).map((p) => ({ value: p.id, label: p.name })))
 const channelOptions = computed(() => (props.channels || []).map((c) => ({ value: c.id, label: c.name + (c.chat_title ? ` · ${c.chat_title}` : '') })))
 const rules = { title: { required: true, trigger: 'blur' } }
 
-async function createProjectOption(label) {
-  const p = await api.post('/api/projects', { name: label })
-  emit('projects-changed')
-  form.project_id = p.id
+async function createGroupOption(label) {
+  const p = await api.post('/api/groups', { name: label })
+  emit('groups-changed')
+  form.group_id = p.id
   return { label: p.name, value: p.id }
 }
 
@@ -149,7 +150,7 @@ async function submit() {
       title: form.title.trim(), description: form.description, freq: form.freq, interval: form.interval || 1,
       by_weekday: form.by_weekday.join(','), by_monthday: form.by_monthday, by_month: form.by_month,
       time_of_day: form.time_of_day || '09:00', start_date: form.start_date || today(), mode: form.mode, steps: form.steps,
-      project_id: typeof form.project_id === 'number' ? form.project_id : 0, remind_offsets: form.offsets.join(',') || '0',
+      group_id: typeof form.group_id === 'number' ? form.group_id : 0, remind_offsets: form.offsets.join(',') || '0',
       remind_overdue: form.remind_overdue, remind_channels: form.remind_channels,
     }
     const res = props.task ? await api.put(`/api/tasks/${props.task.id}`, payload) : await api.post('/api/tasks', payload)

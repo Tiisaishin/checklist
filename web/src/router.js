@@ -11,6 +11,7 @@ const routes = [
       { path: '', name: 'dashboard', component: () => import('./views/Dashboard.vue') },
       { path: 'assets', name: 'assets', component: () => import('./views/Assets.vue') },
       { path: 'tasks', name: 'tasks', component: () => import('./views/Tasks.vue') },
+      { path: 'groups', name: 'groups', component: () => import('./views/Groups.vue') },
       { path: 'channels', name: 'channels', component: () => import('./views/Channels.vue') },
       { path: 'templates', name: 'templates', component: () => import('./views/Templates.vue') },
       { path: 'notifications', name: 'notifications', component: () => import('./views/Notifications.vue') },

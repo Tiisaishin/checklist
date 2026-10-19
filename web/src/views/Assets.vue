@@ -12,17 +12,17 @@
         <n-radio-button value="">{{ t('common.all') }}</n-radio-button>
         <n-radio-button v-for="tp in types" :key="tp" :value="tp">{{ t('asset.types.' + tp) }}</n-radio-button>
       </n-radio-group>
-      <n-select v-model:value="filters.project_id" :options="projectOptions" clearable size="small" style="width: 160px" :placeholder="t('asset.project')" @update:value="reload" />
+      <n-select v-model:value="filters.group_id" :options="groupOptions" clearable size="small" style="width: 160px" :placeholder="t('asset.group')" @update:value="reload" />
       <n-input v-model:value="filters.keyword" size="small" clearable style="width: 220px" :placeholder="t('asset.keyword')" @keyup.enter="reload" @clear="reload" />
       <n-select v-model:value="filters.status" size="small" style="width: 110px" :options="statusOptions" @update:value="reload" />
     </div>
 
     <n-data-table
       remote :columns="columns" :data="rows" :loading="loading" :pagination="pagination" :row-key="(r) => r.id"
-      :scroll-x="900" size="small" @update:page="changePage"
+      :scroll-x="1030" size="small" @update:page="changePage"
     />
 
-    <AssetForm v-model:show="formVisible" :asset="editing" :projects="projects" :channels="channels" @saved="onSaved" @projects-changed="loadProjects" />
+    <AssetForm v-model:show="formVisible" :asset="editing" :groups="groups" :channels="channels" @saved="onSaved" @groups-changed="loadGroups" />
 
     <n-modal v-model:show="detailVisible" preset="card" :title="t('asset.detectInfo')" style="max-width: 560px">
       <n-descriptions v-if="detail" :column="1" label-placement="left" size="small" bordered>
@@ -39,6 +39,7 @@
 <script setup>
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { NButton, NDropdown, NIcon, NTag, NTooltip } from 'naive-ui'
 import { AddOutline, EllipsisHorizontal, CheckmarkCircleOutline, AlertCircleOutline } from '@vicons/ionicons5'
 import { api, confirmDelete, message } from '../utils/api'
@@ -46,23 +47,24 @@ import { fmt, fmtDate } from '../utils/time'
 import { useAuth } from '../stores/auth'
 import DaysTag from '../components/DaysTag.vue'
 import AssetForm from '../components/AssetForm.vue'
+import GroupTag from '../components/GroupTag.vue'
 
 const { t } = useI18n()
 const auth = useAuth()
 const types = ['domain', 'ssl', 'server', 'subscription', 'license', 'account', 'other']
 
-const filters = reactive({ type: '', project_id: null, keyword: '', status: 'active' })
+const filters = reactive({ type: '', group_id: Number(useRoute().query.group_id) || null, keyword: '', status: 'active' })
 const rows = ref([])
 const loading = ref(false)
 const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 })
-const projects = ref([])
+const groups = ref([])
 const channels = ref([])
 const formVisible = ref(false)
 const editing = ref(null)
 const detailVisible = ref(false)
 const detail = ref(null)
 
-const projectOptions = computed(() => projects.value.map((p) => ({ label: p.name, value: p.id })))
+const groupOptions = computed(() => groups.value.map((p) => ({ label: p.name, value: p.id })))
 const statusOptions = computed(() => [
   { label: t('common.active'), value: 'active' },
   { label: t('common.archived'), value: 'archived' },
@@ -75,6 +77,10 @@ const columns = computed(() => [
       h('div', { style: 'font-weight:500' }, r.name),
       r.identifier && r.identifier !== r.name ? h('div', { class: 'muted mono' }, r.identifier) : null,
     ]),
+  },
+  {
+    title: t('asset.group'), key: 'group_id', width: 130,
+    render: (r) => h(GroupTag, { group: groups.value.find((g) => g.id === r.group_id) }),
   },
   {
     title: t('asset.type'), key: 'type', width: 120,
@@ -143,8 +149,8 @@ async function onMore(key, r) {
 }
 
 function pick(r) {
-  const { type, name, identifier, url, provider, project_id, expire_time, auto_detect, price, currency, renew_cycle, auto_renew, remind_offsets, remind_overdue, remind_channels, notes } = r
-  return { type, name, identifier, url, provider, project_id, expire_time, auto_detect, price, currency, renew_cycle, auto_renew, remind_offsets, remind_overdue, remind_channels: remind_channels || [], notes: notes || '' }
+  const { type, name, identifier, url, provider, group_id, expire_time, auto_detect, price, currency, renew_cycle, auto_renew, remind_offsets, remind_overdue, remind_channels, notes } = r
+  return { type, name, identifier, url, provider, group_id, expire_time, auto_detect, price, currency, renew_cycle, auto_renew, remind_offsets, remind_overdue, remind_channels: remind_channels || [], notes: notes || '' }
 }
 
 async function renew(r) {
@@ -180,11 +186,11 @@ async function load() {
 }
 function reload() { pagination.page = 1; load() }
 function changePage(p) { pagination.page = p; load() }
-async function loadProjects() { projects.value = await api.get('/api/projects') }
+async function loadGroups() { groups.value = await api.get('/api/groups') }
 
 onMounted(async () => {
   load()
-  loadProjects()
+  loadGroups()
   channels.value = (await api.get('/api/channels')).items
 })
 </script>

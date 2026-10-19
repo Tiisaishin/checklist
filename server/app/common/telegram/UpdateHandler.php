@@ -6,6 +6,7 @@ use app\common\model\Channel;
 use app\common\model\Task;
 use app\common\model\User;
 use app\common\service\AssetService;
+use app\common\service\ChannelRouter;
 use app\common\service\DetectService;
 use app\common\service\TaskService;
 use app\common\service\TemplateService;
@@ -183,16 +184,24 @@ class UpdateHandler
         $tenantIds = array_unique(array_map(fn ($c) => (int) $c->tenant_id, $channels));
         $lines     = [];
 
+        // 只列出会发到当前聊天的条目（按分组的渠道设置过滤）
+        $router    = new ChannelRouter();
+        $chatIds   = array_map(fn ($c) => (int) $c->id, $channels);
+        $routed    = function ($item) use ($router, $chatIds): bool {
+            $ids = $router->resolve((int) $item->tenant_id, (int) $item->group_id, $item->remind_channels);
+            return $ids === null || (bool) array_intersect($ids, $chatIds);
+        };
+
         $assets = Asset::whereIn('tenant_id', $tenantIds)->where('status', 'active')
             ->whereNotNull('expire_time')->where('expire_time', '<=', $limit)->order('expire_time')->limit(30)->select();
-        foreach ($assets as $a) {
+        foreach (array_filter($assets->all(), $routed) as $a) {
             $d       = TimeHelper::daysBetween($today, TimeHelper::fromDb($a->expire_time)->setTimezone($tz));
             $lines[] = ($d < 0 ? '🔴' : ($d <= 3 ? '🟠' : '🟡')) . ' ' . htmlspecialchars($a->name) . ' — ' . TemplateService::statusText($d, $locale);
         }
 
         $tasks = Task::whereIn('tenant_id', $tenantIds)->where('status', 'active')
             ->whereNotNull('next_due_time')->where('next_due_time', '<=', $limit)->order('next_due_time')->limit(30)->select();
-        foreach ($tasks as $t) {
+        foreach (array_filter($tasks->all(), $routed) as $t) {
             $due     = TimeHelper::fromDb($t->next_due_time)->setTimezone($tz);
             $d       = TimeHelper::daysBetween($today, $due);
             $lines[] = ($due <= $now ? '🔴' : '☑️') . ' ' . htmlspecialchars($t->title) . ' — ' . $due->format('m-d H:i');
