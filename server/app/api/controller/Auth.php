@@ -6,6 +6,7 @@ use app\common\exception\ApiException;
 use app\common\model\Setting;
 use app\common\service\AuthContext;
 use app\common\service\AuthService;
+use app\common\service\MemberService;
 use app\common\service\QuotaService;
 use app\common\service\TimeHelper;
 
@@ -13,21 +14,29 @@ class Auth extends ApiController
 {
     public function register()
     {
-        if (Setting::getValue('register_enabled', '1') !== '1') {
-            throw new ApiException(lang('register_disabled'), 403);
-        }
         $data = $this->validated([
-            'email'    => 'require|email|max:191',
-            'password' => 'require|min:8|max:64',
-            'name'     => 'max:64',
-            'locale'   => 'max:16',
-            'timezone' => 'max:64',
+            'email'        => 'require|email|max:191',
+            'password'     => 'require|min:8|max:64',
+            'name'         => 'max:64',
+            'locale'       => 'max:16',
+            'timezone'     => 'max:64',
+            'invite_token' => 'max:64',
         ]);
 
-        AuthService::register($data['email'], $data['password'], $data['name'] ?? '', $data['locale'] ?? '', $data['timezone'] ?? '');
+        // 关闭注册时，持有发给该邮箱的有效邀请仍可注册
+        $invitation = MemberService::findByToken((string) ($data['invite_token'] ?? ''));
+        $invited    = $invitation && $invitation->isValid() && strtolower($invitation->email) === strtolower(trim($data['email']));
+        if (!$invited && Setting::getValue('register_enabled', '1') !== '1') {
+            throw new ApiException(lang('register_disabled'), 403);
+        }
+
+        $user = AuthService::register($data['email'], $data['password'], $data['name'] ?? '', $data['locale'] ?? '', $data['timezone'] ?? '');
+        if ($invited) {
+            MemberService::accept($data['invite_token'], $user);
+        }
         $result = AuthService::login($data['email'], $data['password'], $this->request->ip(), (string) $this->request->header('user-agent'));
 
-        return $this->ok(['token' => $result['token']]);
+        return $this->ok(['token' => $result['token'], 'joined' => $invited]);
     }
 
     public function login()

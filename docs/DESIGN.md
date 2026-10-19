@@ -119,6 +119,7 @@ reminder_rules(id, tenant_id, target_type, target_id, offsets JSON,
 channels(id, tenant_id, user_id, type, config JSON(加密), verified_at)
 templates(id, tenant_id, channel_type, locale, content)
 notification_logs(id, rule_id, target_date, offset, channel_id, status, error)
+invitations(id, tenant_id, inviter_id, email, role, token(sha256), status, expire_time, accept_user_id)
 vault_items(id, tenant_id, project_id, title, data_encrypted, ...)
 vault_access_logs / audit_logs / plans / subscriptions / api_tokens
 ```
@@ -144,5 +145,5 @@ vault_access_logs / audit_logs / plans / subscriptions / api_tokens
 - [x] 中英文、用户时区
 - [x] Docker Compose 部署
 - [x] 信息分组：默认分组 + 每个分组单独指定通知渠道（Bot）
-- [ ] 团队成员邀请（数据结构已支持，缺邀请流程与界面）
+- [x] 团队成员邀请：邀请链接（绑定邮箱、7 天、一次性）、角色管理、移出、转让所有权、退出空间
 - [ ] 保险箱、更多通知渠道、日历/iCal、导入导出（v2）

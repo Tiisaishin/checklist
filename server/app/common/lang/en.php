@@ -17,6 +17,11 @@ return [
     'field_color'            => 'Color',
     'field_description'      => 'Description',
 
+    'already_member'         => 'This user is already a member',
+    'invite_invalid'         => 'This invitation is invalid or has expired',
+    'invite_email_mismatch'  => 'This invitation was sent to {:email}. Please sign in or sign up with that email.',
+    'owner_cannot_leave'     => 'The owner cannot leave. Transfer ownership first.',
+    'field_role'             => 'Role',
     'email_taken'            => 'This email is already registered',
     'too_many_attempts'      => 'Too many attempts, try again in 10 minutes',
     'login_failed'           => 'Incorrect email or password',

@@ -6,6 +6,7 @@ use think\facade\Route;
 Route::get('meta', 'Meta/index');
 Route::post('auth/register', 'Auth/register');
 Route::post('auth/login', 'Auth/login');
+Route::get('invitations/:token', 'Invitation/show')->pattern(['token' => '[a-f0-9]{40}']);
 
 // 需要登录
 Route::group(function () {
@@ -19,6 +20,16 @@ Route::group(function () {
     Route::get('tenant', 'Tenant/current');
     Route::put('tenant', 'Tenant/update');
     Route::post('tenant/switch', 'Tenant/switch');
+
+    Route::post('invitations/:token/accept', 'Invitation/accept')->pattern(['token' => '[a-f0-9]{40}']);
+
+    Route::get('members', 'Member/index');
+    Route::post('members/invite', 'Member/invite');
+    Route::post('members/leave', 'Member/leave');
+    Route::delete('members/invitations/:id', 'Member/revoke');
+    Route::put('members/:id', 'Member/update');
+    Route::delete('members/:id', 'Member/delete');
+    Route::post('members/:id/transfer', 'Member/transfer');
 
     Route::get('groups', 'Group/index');
     Route::post('groups', 'Group/save');

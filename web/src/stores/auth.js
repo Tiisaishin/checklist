@@ -43,6 +43,8 @@ export const useAuth = defineStore('auth', {
     async register(payload) {
       const data = await api.post('/api/auth/register', payload)
       this.setToken(data.token)
+      // 通过邀请注册时，后端已切换到被邀请的空间
+      localStorage.removeItem('tenant')
       await this.fetchMe()
     },
     async logout() {

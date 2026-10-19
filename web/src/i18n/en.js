@@ -8,7 +8,7 @@ export default {
     default: 'Default', reset: 'Reset to default', preview: 'Preview', test: 'Test', close: 'Close',
   },
   nav: {
-    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', groups: 'Groups', channels: 'Channels', templates: 'Templates',
+    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', groups: 'Groups', members: 'Team', channels: 'Channels', templates: 'Templates',
     notifications: 'Notification log', settings: 'Settings', admin: 'Platform', adminOverview: 'Overview', adminUsers: 'Users',
     adminTenants: 'Workspaces', adminPlans: 'Plans', adminSettings: 'System settings', logout: 'Sign out', theme: 'Toggle theme',
   },
@@ -56,6 +56,21 @@ export default {
     description: 'Description', channels: 'Channels (bots)', channelsHint: 'Multiple allowed. Empty: normal groups use the default group\'s channels; the default group sends to all your channels',
     inheritDefault: 'Uses default group channels', allChannels: 'Sends to all channels', assets: 'Assets', tasks: 'Checks', manageChannels: 'Manage channels',
     deleteTip: 'Assets and checks in this group will be moved to the default group.', notMine: 'Another member\'s channel',
+  },
+  member: {
+    title: 'Team members', invite: 'Invite member', email: 'Email', role: 'Role', joined: 'Joined', lastLogin: 'Last login', you: 'You',
+    roles: { owner: 'Owner', admin: 'Admin', member: 'Member', viewer: 'Viewer' },
+    roleDesc: { admin: 'Manage members, groups and all data', member: 'Create and edit assets and checks', viewer: 'Read only' },
+    pending: 'Pending invitations', expires: 'Expires', revoke: 'Revoke', remove: 'Remove', transfer: 'Transfer ownership', leave: 'Leave workspace',
+    removeConfirm: 'Remove {name} from this workspace? Their channels in this workspace will be deleted.', transferConfirm: 'Transfer ownership to {name}? You will become an admin.',
+    leaveConfirm: 'Leave "{name}"? Your channels in this workspace will be deleted.', inviteLink: 'Invitation link',
+    inviteLinkTip: 'Valid for 7 days and can be used once by {email}. Copy it and send it via chat.', copyLink: 'Copy link',
+    desc: 'Invite teammates to manage expirations together. Each member binds their own Telegram; groups decide who gets notified.',
+  },
+  invite: {
+    title: 'Join team', text: '{inviter} invited you to join "{tenant}" as {role}', forEmail: 'Invitation for: {email}',
+    accept: 'Accept invitation', loginToAccept: 'Sign in to accept', registerToAccept: 'Sign up and join', mismatch: 'You are signed in as {current}; this invitation can only be accepted by {email}.',
+    switchAccount: 'Switch account', joined: 'Joined {tenant}', invalid: 'This invitation is invalid or has expired', joinedHint: 'You will join the team after signing up',
   },
   channel: {
     title: 'Channels', add: 'Add channel', mode: 'Bot', system: 'Platform bot', systemDesc: 'Use the platform bot ({\'@\'}{name}), no setup needed',

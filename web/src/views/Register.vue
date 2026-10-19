@@ -1,12 +1,13 @@
 <template>
   <AuthShell>
-    <n-alert v-if="auth.meta && !auth.meta.register_enabled" type="warning" :bordered="false">{{ t('auth.registerClosed') }}</n-alert>
+    <n-alert v-if="auth.meta && !auth.meta.register_enabled && !inviteToken" type="warning" :bordered="false">{{ t('auth.registerClosed') }}</n-alert>
     <n-form v-else ref="formRef" :model="form" :rules="rules" @submit.prevent="submit">
+      <n-alert v-if="inviteToken" type="info" :bordered="false" style="margin-bottom: 12px">{{ t('invite.joinedHint') }}</n-alert>
       <n-form-item :label="t('auth.name')" path="name">
         <n-input v-model:value="form.name" />
       </n-form-item>
       <n-form-item :label="t('auth.email')" path="email">
-        <n-input v-model:value="form.email" :input-props="{ type: 'email', autocomplete: 'email' }" />
+        <n-input v-model:value="form.email" :disabled="!!inviteToken" :input-props="{ type: 'email', autocomplete: 'email' }" />
       </n-form-item>
       <n-form-item :label="t('auth.password')" path="password">
         <n-input v-model:value="form.password" type="password" show-password-on="click" :placeholder="t('auth.passwordHint')" :input-props="{ autocomplete: 'new-password' }" />
@@ -22,16 +23,18 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AuthShell from '../components/AuthShell.vue'
 import { useAuth } from '../stores/auth'
 
 const { t, locale } = useI18n()
 const auth = useAuth()
 const router = useRouter()
+const route = useRoute()
+const inviteToken = route.query.invite || ''
 const formRef = ref()
 const loading = ref(false)
-const form = reactive({ name: '', email: '', password: '' })
+const form = reactive({ name: '', email: route.query.email || '', password: '' })
 const rules = {
   email: { required: true, trigger: 'blur' },
   password: { required: true, min: 8, trigger: 'blur' },
@@ -46,8 +49,9 @@ async function submit() {
       ...form,
       locale: locale.value,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      invite_token: inviteToken || undefined,
     })
-    router.replace({ name: 'channels' })
+    router.replace({ name: inviteToken ? 'dashboard' : 'channels' })
   } finally {
     loading.value = false
   }

@@ -28,7 +28,7 @@ const router = useRouter()
 const route = useRoute()
 const formRef = ref()
 const loading = ref(false)
-const form = reactive({ email: '', password: '' })
+const form = reactive({ email: route.query.email || '', password: '' })
 const rules = {
   email: { required: true, trigger: 'blur' },
   password: { required: true, trigger: 'blur' },

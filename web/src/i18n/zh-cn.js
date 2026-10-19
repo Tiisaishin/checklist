@@ -8,7 +8,7 @@ export default {
     default: '默认', reset: '恢复默认', preview: '预览', test: '测试', close: '关闭',
   },
   nav: {
-    dashboard: '概览', assets: '资产到期', tasks: '周期检查', groups: '信息分组', channels: '通知渠道', templates: '通知模板',
+    dashboard: '概览', assets: '资产到期', tasks: '周期检查', groups: '信息分组', members: '团队成员', channels: '通知渠道', templates: '通知模板',
     notifications: '通知记录', settings: '个人设置', admin: '平台管理', adminOverview: '运营概览', adminUsers: '用户',
     adminTenants: '空间', adminPlans: '套餐', adminSettings: '系统设置', logout: '退出登录', theme: '切换主题',
   },
@@ -56,6 +56,21 @@ export default {
     description: '说明', channels: '通知渠道（Bot）', channelsHint: '可多选。留空时：普通分组使用默认分组的渠道，默认分组发送到你的全部渠道',
     inheritDefault: '使用默认分组的渠道', allChannels: '发送到全部渠道', assets: '资产', tasks: '检查项', manageChannels: '管理通知渠道',
     deleteTip: '删除后，组内的资产和检查项会移到默认分组。', notMine: '其他成员的渠道',
+  },
+  member: {
+    title: '团队成员', invite: '邀请成员', email: '邮箱', role: '角色', joined: '加入时间', lastLogin: '最近登录', you: '你',
+    roles: { owner: '所有者', admin: '管理员', member: '成员', viewer: '只读' },
+    roleDesc: { admin: '可管理成员、分组和全部数据', member: '可新增和编辑资产、检查项', viewer: '只能查看' },
+    pending: '待接受的邀请', expires: '有效期至', revoke: '撤销', remove: '移出', transfer: '转让所有权', leave: '退出空间',
+    removeConfirm: '确定将 {name} 移出空间？其在本空间的通知渠道会一并删除。', transferConfirm: '确定把所有权转让给 {name}？你将变为管理员。',
+    leaveConfirm: '确定退出「{name}」？你在本空间的通知渠道会被删除。', inviteLink: '邀请链接',
+    inviteLinkTip: '链接 7 天内有效，只能由 {email} 使用一次。请复制后通过聊天工具发送给对方。', copyLink: '复制链接',
+    desc: '邀请同事共同管理到期事项。成员各自绑定自己的 Telegram，分组可以指定发给谁。',
+  },
+  invite: {
+    title: '加入团队', text: '{inviter} 邀请你以「{role}」身份加入「{tenant}」', forEmail: '邀请发送给：{email}',
+    accept: '接受邀请', loginToAccept: '登录后接受', registerToAccept: '注册并加入', mismatch: '当前登录的是 {current}，该邀请只能由 {email} 接受。',
+    switchAccount: '切换账号', joined: '已加入 {tenant}', invalid: '邀请链接无效或已过期', joinedHint: '注册完成后将自动加入团队',
   },
   channel: {
     title: '通知渠道', add: '添加渠道', mode: 'Bot 类型', system: '平台 Bot', systemDesc: '使用平台提供的 Bot（{\'@\'}{name}），无需配置',

@@ -4,6 +4,7 @@ import { useAuth } from './stores/auth'
 const routes = [
   { path: '/login', name: 'login', component: () => import('./views/Login.vue'), meta: { auth: false } },
   { path: '/register', name: 'register', component: () => import('./views/Register.vue'), meta: { auth: false } },
+  { path: '/invite/:token', name: 'invite', component: () => import('./views/Invite.vue'), meta: { auth: false } },
   {
     path: '/',
     component: () => import('./layouts/MainLayout.vue'),
@@ -12,6 +13,7 @@ const routes = [
       { path: 'assets', name: 'assets', component: () => import('./views/Assets.vue') },
       { path: 'tasks', name: 'tasks', component: () => import('./views/Tasks.vue') },
       { path: 'groups', name: 'groups', component: () => import('./views/Groups.vue') },
+      { path: 'members', name: 'members', component: () => import('./views/Members.vue') },
       { path: 'channels', name: 'channels', component: () => import('./views/Channels.vue') },
       { path: 'templates', name: 'templates', component: () => import('./views/Templates.vue') },
       { path: 'notifications', name: 'notifications', component: () => import('./views/Notifications.vue') },

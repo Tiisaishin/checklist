@@ -19,6 +19,11 @@ return [
     'field_description'      => '说明',
 
     // 账号
+    'already_member'         => '该用户已经是成员',
+    'invite_invalid'         => '邀请链接无效或已过期',
+    'invite_email_mismatch'  => '这个邀请是发给 {:email} 的，请使用该邮箱登录或注册',
+    'owner_cannot_leave'     => '所有者不能退出，请先转让所有权',
+    'field_role'             => '角色',
     'email_taken'            => '该邮箱已注册',
     'too_many_attempts'      => '尝试次数过多，请 10 分钟后再试',
     'login_failed'           => '邮箱或密码错误',
