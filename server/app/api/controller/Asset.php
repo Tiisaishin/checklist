@@ -1,0 +1,185 @@
+<?php
+namespace app\api\controller;
+
+use app\common\controller\ApiController;
+use app\common\detector\DomainDetector;
+use app\common\detector\SslDetector;
+use app\common\exception\ApiException;
+use app\common\model\Asset as AssetModel;
+use app\common\service\AssetService;
+use app\common\service\AuthContext;
+use app\common\service\DetectService;
+use app\common\service\QuotaService;
+use app\common\service\TimeHelper;
+use DateTimeImmutable;
+
+class Asset extends ApiController
+{
+    public function index()
+    {
+        $query = AssetModel::where('tenant_id', $this->tenantId());
+
+        $type = $this->request->param('type');
+        if ($type) {
+            $query->where('type', $type);
+        }
+        if ($projectId = (int) $this->request->param('project_id')) {
+            $query->where('project_id', $projectId);
+        }
+        $query->where('status', $this->request->param('status', 'active'));
+        if ($keyword = trim((string) $this->request->param('keyword'))) {
+            $query->where(function ($q) use ($keyword) {
+                $q->whereLike('name', "%{$keyword}%")->whereOr('identifier', 'like', "%{$keyword}%")->whereOr('provider', 'like', "%{$keyword}%");
+            });
+        }
+        if ($within = (int) $this->request->param('within')) {
+            $query->whereNotNull('expire_time')->where('expire_time', '<=', now_utc("+{$within} days"));
+        }
+
+        // 无到期时间的排在最后
+        $query->orderRaw('CASE WHEN expire_time IS NULL THEN 1 ELSE 0 END, expire_time ASC, id DESC');
+
+        $result          = $this->paginate($query);
+        $result['items'] = array_map(fn ($a) => self::present($a), $result['items']);
+        return $this->ok($result);
+    }
+
+    public function read(int $id)
+    {
+        return $this->ok(self::present($this->find($id)));
+    }
+
+    public function save()
+    {
+        QuotaService::ensure(AuthContext::tenant(), 'assets');
+        $data = $this->input();
+        $data += ['tenant_id' => $this->tenantId(), 'user_id' => AuthContext::userId()];
+
+        $asset = AssetModel::find(AssetModel::create($data)->id);
+        if ($asset->auto_detect && in_array($asset->type, AssetModel::DETECTABLE, true)) {
+            DetectService::detect($asset);
+            $asset = AssetModel::find($asset->id);
+        }
+        return $this->ok(self::present($asset), lang('saved'));
+    }
+
+    public function update(int $id)
+    {
+        $asset = $this->find($id);
+        $data  = $this->input();
+        if (array_key_exists('expire_time', $data) && $data['expire_time'] !== $asset->expire_time) {
+            $data['ack_expire_time'] = null;
+        }
+        $asset->save($data);
+        return $this->ok(self::present(AssetModel::find($id)), lang('saved'));
+    }
+
+    public function delete(int $id)
+    {
+        $this->find($id)->delete();
+        return $this->ok(null, lang('deleted'));
+    }
+
+    public function detect(int $id)
+    {
+        $asset = $this->find($id);
+        if (!in_array($asset->type, AssetModel::DETECTABLE, true)) {
+            throw new ApiException(lang('detect_not_supported'));
+        }
+        DetectService::detect($asset);
+        return $this->ok(self::present(AssetModel::find($id)));
+    }
+
+    public function ack(int $id)
+    {
+        $asset = $this->find($id);
+        AssetService::ack($asset);
+        return $this->ok(self::present($asset));
+    }
+
+    public function renew(int $id)
+    {
+        $asset = $this->find($id);
+        AssetService::renew($asset, TimeHelper::parseInput($this->request->param('expire_time')));
+        return $this->ok(self::present(AssetModel::find($id)), lang('saved'));
+    }
+
+    public function snooze(int $id)
+    {
+        $asset = $this->find($id);
+        AssetService::snooze($asset, (string) $this->request->param('period', '1d'));
+        return $this->ok(self::present($asset));
+    }
+
+    private function find(int $id): AssetModel
+    {
+        return AssetModel::where('tenant_id', $this->tenantId())->findOrFail($id);
+    }
+
+    private function input(): array
+    {
+        $data = $this->validated([
+            'type'            => 'require|in:' . implode(',', AssetModel::TYPES),
+            'name'            => 'require|max:191',
+            'identifier'      => 'max:255',
+            'url'             => 'max:500',
+            'provider'        => 'max:128',
+            'project_id'      => 'integer',
+            'expire_time'     => 'max:40',
+            'auto_detect'     => 'boolean',
+            'price'           => 'float|egt:0',
+            'currency'        => 'max:8',
+            'renew_cycle'     => 'in:monthly,quarterly,yearly,once',
+            'auto_renew'      => 'boolean',
+            'remind_offsets'  => 'max:128',
+            'remind_overdue'  => 'boolean',
+            'remind_channels' => 'array',
+            'notes'           => 'max:5000',
+            'status'          => 'in:active,archived',
+        ]);
+
+        if (array_key_exists('expire_time', $data)) {
+            $data['expire_time'] = TimeHelper::parseInput($data['expire_time']);
+        }
+        if (isset($data['remind_offsets'])) {
+            $value = is_array($data['remind_offsets']) ? implode(',', $data['remind_offsets']) : (string) $data['remind_offsets'];
+            $data['remind_offsets'] = implode(',', parse_offsets($value));
+        }
+        if (isset($data['remind_channels'])) {
+            $data['remind_channels'] = array_values(array_map('intval', $data['remind_channels']));
+        }
+        $identifier = trim((string) ($data['identifier'] ?? ''));
+        if ($identifier !== '') {
+            $data['identifier'] = match ($data['type']) {
+                'domain' => DomainDetector::normalize($identifier),
+                'ssl'    => SslDetector::normalize($identifier),
+                default  => $identifier,
+            };
+        } elseif (in_array($data['type'], AssetModel::DETECTABLE, true) && !empty($data['auto_detect'])) {
+            // 域名/证书未填写标识时，尝试从名称推断
+            $data['identifier'] = $data['type'] === 'domain' ? DomainDetector::normalize($data['name']) : SslDetector::normalize($data['name']);
+        }
+        foreach (['auto_detect', 'auto_renew', 'remind_overdue'] as $bool) {
+            if (isset($data[$bool])) {
+                $data[$bool] = (int) filter_var($data[$bool], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+        if (isset($data['currency'])) {
+            $data['currency'] = strtoupper($data['currency']);
+        }
+        return $data;
+    }
+
+    /** 增加按用户时区计算的剩余天数 */
+    public static function present(AssetModel $asset): array
+    {
+        $data   = $asset->toArray();
+        $tz     = TimeHelper::tz(AuthContext::user()->timezone);
+        $expire = TimeHelper::fromDb($asset->expire_time);
+        $data['days_left'] = $expire
+            ? TimeHelper::daysBetween((new DateTimeImmutable('now', TimeHelper::utc()))->setTimezone($tz), $expire->setTimezone($tz))
+            : null;
+        $data['acked'] = $asset->ack_expire_time && $asset->ack_expire_time === $asset->expire_time;
+        return $data;
+    }
+}

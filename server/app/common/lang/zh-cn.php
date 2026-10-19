@@ -1,0 +1,109 @@
+<?php
+return [
+    // 通用
+    'ok'                     => '成功',
+    'saved'                  => '已保存',
+    'deleted'                => '已删除',
+    'not_found'              => '数据不存在',
+    'server_error'           => '服务器错误，请稍后再试',
+    'unauthorized'           => '请先登录',
+    'forbidden'              => '没有权限',
+    'tenant_unavailable'     => '空间不可用',
+    'personal_space'         => '{:name} 的空间',
+
+    // 账号
+    'email_taken'            => '该邮箱已注册',
+    'too_many_attempts'      => '尝试次数过多，请 10 分钟后再试',
+    'login_failed'           => '邮箱或密码错误',
+    'account_disabled'       => '账号已被禁用',
+    'register_disabled'      => '暂未开放注册',
+    'password_wrong'         => '当前密码错误',
+
+    // 配额
+    'quota_exceeded'         => '当前套餐最多可创建 {:limit} 个{:resource}，请升级套餐',
+    'resource_assets'        => '资产',
+    'resource_tasks'         => '检查项',
+    'resource_channels'      => '通知渠道',
+    'resource_members'       => '成员',
+
+    // 渠道
+    'system_bot_unavailable' => '平台 Bot 尚未配置，请使用自己的 Bot',
+    'invalid_bot_token'      => 'Bot Token 无效',
+    'invalid_chat_id'        => 'Chat ID 格式不正确',
+    'send_failed'            => '发送失败',
+    'channel_not_active'     => '渠道尚未绑定',
+    'detect_not_supported'   => '该类型不支持自动探测',
+
+    // 字段
+    'field_email'            => '邮箱',
+    'field_password'         => '密码',
+    'field_name'             => '名称',
+    'field_title'            => '标题',
+    'field_type'             => '类型',
+    'field_identifier'       => '标识',
+    'field_expire_time'      => '到期时间',
+    'field_freq'             => '频率',
+    'field_interval'         => '间隔',
+    'field_time_of_day'      => '时间',
+    'field_mode'             => '模式',
+    'field_locale'           => '语言',
+    'field_timezone'         => '时区',
+    'field_notify_time'      => '提醒时间',
+    'field_content'          => '内容',
+    'field_bot_token'        => 'Bot Token',
+    'field_chat_id'          => 'Chat ID',
+    'field_remind_offsets'   => '提前提醒天数',
+    'field_url'              => '链接',
+    'field_price'            => '价格',
+    'field_code'             => '代码',
+
+    // 状态文案
+    'status_days_left'       => '还有 {:days} 天到期',
+    'status_today'           => '今天到期',
+    'status_overdue'         => '已过期 {:days} 天',
+
+    'asset_type_domain'       => '域名',
+    'asset_type_ssl'          => 'SSL 证书',
+    'asset_type_server'       => '服务器',
+    'asset_type_subscription' => '订阅服务',
+    'asset_type_license'      => '软件授权',
+    'asset_type_account'      => '账号',
+    'asset_type_other'        => '其他',
+
+    'freq_daily'             => '每天',
+    'freq_daily_n'           => '每 {:n} 天',
+    'freq_weekly'            => '每周',
+    'freq_weekly_n'          => '每 {:n} 周',
+    'freq_monthly'           => '每月',
+    'freq_monthly_n'         => '每 {:n} 个月',
+    'freq_yearly'            => '每年',
+    'freq_yearly_n'          => '每 {:n} 年',
+    'sample_task_title'      => '检查服务器磁盘与备份',
+
+    // 按钮
+    'btn_renewed'            => '✅ 已续费',
+    'btn_done'               => '✅ 完成',
+    'btn_tomorrow'           => '⏰ 明天',
+    'btn_1h'                 => '⏰ 1 小时',
+    'btn_detect'             => '🔄 重新检测',
+
+    // Telegram
+    'tg_welcome'             => "👋 欢迎使用 Checklist 提醒 Bot。\n\n请在网页「通知渠道」中点击绑定链接完成绑定。\n当前 Chat ID：<code>{:chat_id}</code>",
+    'tg_chat_id'             => '当前 Chat ID：<code>{:chat_id}</code>',
+    'tg_help'                => "/today 7 天内待办\n/soon 30 天内到期\n/id 查看 Chat ID\n/help 帮助",
+    'tg_bind_invalid'        => '绑定码无效或已使用，请在网页重新生成。',
+    'tg_bind_success'        => '✅ 绑定成功！{:name}，之后的到期提醒会发送到这里。',
+    'tg_not_bound'           => '当前聊天尚未绑定账号。',
+    'tg_acked'               => '已标记为已处理',
+    'tg_snoozed'             => '好的，稍后再提醒',
+    'tg_detected'            => '检测完成，到期日 {:date}',
+    'tg_detect_failed'       => '检测失败，请到网页查看原因',
+    'tg_done'                => '已完成 👍',
+    'tg_upcoming_title'      => '{:days} 天内的待办',
+    'tg_nothing'             => '🎉 {:days} 天内没有需要处理的事项。',
+    'tg_test_message'        => '✅ 这是一条来自 Checklist 的测试消息，渠道已可用。',
+
+    // 默认通知模板（变量用 {name} 形式）
+    'tpl_asset_expire'       => "⏰ <b>{type}到期提醒</b>\n\n<b>{name}</b>\n{status_text}（{expire_date}）\n服务商：{provider}\n续费：{price}\n{url}",
+    'tpl_task_due'           => "📋 <b>检查提醒</b>\n\n<b>{title}</b>\n{status_text} · {frequency}\n时间：{due_time}\n{steps}\n{description}",
+];
