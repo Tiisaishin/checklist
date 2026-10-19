@@ -1,0 +1,7 @@
+**/node_modules
+web/dist
+server/vendor
+server/runtime
+server/.env
+.git
+docs

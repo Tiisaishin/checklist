@@ -1,6 +1,6 @@
 # Checklist / 到期提醒 SaaS —— 设计草案
 
-> 状态：头脑风暴阶段，尚未开始编码。技术栈：ThinkPHP 8（多应用）+ MySQL 8 + Redis + Docker。
+> 状态：MVP 已实现（见 README）。技术栈：ThinkPHP 8（多应用）+ Vue 3 + MySQL 8 + Redis + Docker。
 
 ## 1. 核心概念
 
@@ -108,10 +108,10 @@ docker-compose.yml
 tenants(id, name, plan_id, locale, timezone, ...)
 users(id, email, password, locale, timezone, totp_secret, ...)
 tenant_users(tenant_id, user_id, role)
-projects(id, tenant_id, name, color)
-assets(id, tenant_id, project_id, type, name, identifier, expire_at,
+item_groups(id, tenant_id, name, description, color, is_default, remind_channels JSON)
+assets(id, tenant_id, group_id, type, name, identifier, expire_at,
        auto_detect, detect_meta JSON, price, currency, renew_cycle, notes, ...)
-tasks(id, tenant_id, project_id, title, rrule, mode[fixed|after_done],
+tasks(id, tenant_id, group_id, title, rrule, mode[fixed|after_done],
       next_due_at, steps JSON, ...)
 task_runs(id, task_id, user_id, done_at, note, attachments)
 reminder_rules(id, tenant_id, target_type, target_id, offsets JSON,
@@ -119,8 +119,9 @@ reminder_rules(id, tenant_id, target_type, target_id, offsets JSON,
 channels(id, tenant_id, user_id, type, config JSON(加密), verified_at)
 templates(id, tenant_id, channel_type, locale, content)
 notification_logs(id, rule_id, target_date, offset, channel_id, status, error)
-vault_items(id, tenant_id, project_id, title, data_encrypted, ...)
-vault_access_logs / audit_logs / plans / subscriptions / api_tokens
+invitations(id, tenant_id, inviter_id, email, role, token(sha256), status, expire_time, accept_user_id)
+vault_items(id, tenant_id, group_id, asset_id, user_id, type, title, url, visibility, secret(加密), has_totp)
+vault_logs / audit_logs / plans / subscriptions / api_tokens
 ```
 
 ## 7. 迭代计划
@@ -128,7 +129,27 @@ vault_access_logs / audit_logs / plans / subscriptions / api_tokens
 2. **v2**：团队与角色、保险箱、更多通知渠道、模板自定义、Telegram 交互按钮、日历/iCal、导入导出
 3. **v3**：套餐计费、超管后台、云平台 API 同步、uptime/DNS 监测、开放 API、状态页
 
-## 8. 待确定
-- 定位：自用 + 朋友，还是公开商业 SaaS（决定是否先做计费）
-- 前端：Vue 3 SPA（推荐）还是 ThinkPHP 模板 + htmx 的服务端渲染
-- Telegram：平台统一一个 Bot，还是允许每个租户填自己的 Bot Token（两者都支持也可以）
+## 8. 已确定
+- 定位：公开 SaaS（套餐与配额已实现，支付在 v3）
+- 前端：Vue 3 SPA（Naive UI）
+- Telegram：同时支持平台 Bot 和用户自建 Bot，**每个用户都可以设置自己的 Bot**
+
+## 9. MVP 进度
+- [x] 注册登录、个人空间、Token 鉴权、角色（owner/admin/member/viewer）
+- [x] 资产 CRUD、提前提醒天数、过期提醒、续费/已处理/稍后提醒
+- [x] 域名 RDAP/WHOIS、SSL 证书自动探测
+- [x] 周期检查（日/周/月/年、间隔、星期、几号/月末、固定日程/完成后顺延、步骤、完成记录）
+- [x] Telegram 平台 Bot + 用户自建 Bot，绑定链接 / Chat ID，交互按钮与命令，Webhook / 轮询
+- [x] 用户自定义通知模板与预览
+- [x] 套餐配额、平台后台（用户、空间、套餐、系统设置）
+- [x] 中英文、用户时区
+- [x] Docker Compose 部署
+- [x] 信息分组：默认分组 + 每个分组单独指定通知渠道（Bot）
+- [x] 团队成员邀请：邀请链接（绑定邮箱、7 天、一次性）、角色管理、移出、转让所有权、退出空间
+- [x] 保险箱：分空间派生密钥加密、密码解锁 10 分钟、TOTP、密码生成、私密条目、访问审计、套餐上限
+- [x] 域名批量导入（Excel/CSV/TXT/粘贴，自动识别列与编码，同时创建 SSL 监控，撤销）与 CSV 导出
+- [x] 监控增强：自适应检测频率、失败退避、域名状态与阶段、证书问题识别、变化事件通知
+- [x] 通知模板体系：12 个场景、紧急程度、条件块、预设、真实数据预览、链接按钮、每日汇总
+- [x] 域名与证书视图、批量操作
+- [ ] 各平台导出格式预设（待提供样例）、平台 API 同步
+- [ ] 更多通知渠道、日历/iCal

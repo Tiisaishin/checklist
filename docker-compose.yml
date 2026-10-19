@@ -1,0 +1,61 @@
+# 一键部署：cp .env.example .env && docker compose up -d
+x-app: &app
+  build: .
+  image: checklist:latest
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    DB_DRIVER: mysql
+    DB_HOST: mysql
+    DB_PORT: 3306
+    REDIS_HOST: redis
+    CACHE_DRIVER: redis
+    QUEUE_DRIVER: redis
+  volumes:
+    - runtime:/var/www/server/runtime
+  depends_on:
+    - mysql
+    - redis
+
+services:
+  app:
+    <<: *app
+    command: web
+    ports:
+      - "${APP_PORT:-8080}:80"
+
+  worker:
+    <<: *app
+    command: worker
+
+  scheduler:
+    <<: *app
+    command: scheduler
+
+  # 没有 HTTPS 时用轮询接收 Telegram 消息；配置了 HTTPS 的 APP_URL 后会自动走 Webhook，此服务空闲
+  telegram:
+    <<: *app
+    command: telegram
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-checklist}
+      MYSQL_USER: ${DB_USER:-checklist}
+      MYSQL_PASSWORD: ${DB_PASS:-checklist}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-change-me-root}
+    volumes:
+      - mysql:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+
+volumes:
+  runtime:
+  mysql:
+  redis:
