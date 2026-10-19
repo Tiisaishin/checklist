@@ -12,6 +12,7 @@ const routes = [
       { path: '', name: 'dashboard', component: () => import('./views/Dashboard.vue') },
       { path: 'assets', name: 'assets', component: () => import('./views/Assets.vue') },
       { path: 'tasks', name: 'tasks', component: () => import('./views/Tasks.vue') },
+      { path: 'domains', name: 'domains', component: () => import('./views/Domains.vue') },
       { path: 'groups', name: 'groups', component: () => import('./views/Groups.vue') },
       { path: 'members', name: 'members', component: () => import('./views/Members.vue') },
       { path: 'vault', name: 'vault', component: () => import('./views/Vault.vue') },

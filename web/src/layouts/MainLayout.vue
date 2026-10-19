@@ -50,7 +50,7 @@ import { NIcon } from 'naive-ui'
 import {
   GridOutline, TimeOutline, CheckboxOutline, PaperPlaneOutline, DocumentTextOutline, ListOutline,
   SettingsOutline, ShieldCheckmarkOutline, PeopleOutline, BusinessOutline, PricetagsOutline, ConstructOutline,
-  MoonOutline, SunnyOutline, PersonCircleOutline, LogOutOutline, MenuOutline, ChevronDownOutline, StatsChartOutline, FolderOpenOutline, PeopleCircleOutline, LockClosedOutline,
+  MoonOutline, SunnyOutline, PersonCircleOutline, LogOutOutline, MenuOutline, ChevronDownOutline, StatsChartOutline, FolderOpenOutline, PeopleCircleOutline, LockClosedOutline, GlobeOutline,
 } from '@vicons/ionicons5'
 import { useAuth } from '../stores/auth'
 import { useUi } from '../stores/ui'
@@ -78,6 +78,7 @@ const icon = (c) => () => h(NIcon, null, { default: () => h(c) })
 const menuOptions = computed(() => {
   const items = [
     { key: 'dashboard', label: t('nav.dashboard'), icon: icon(GridOutline) },
+    { key: 'domains', label: t('nav.domains'), icon: icon(GlobeOutline) },
     { key: 'assets', label: t('nav.assets'), icon: icon(TimeOutline) },
     { key: 'tasks', label: t('nav.tasks'), icon: icon(CheckboxOutline) },
     { key: 'vault', label: t('nav.vault'), icon: icon(LockClosedOutline) },

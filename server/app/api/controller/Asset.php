@@ -171,6 +171,7 @@ class Asset extends ApiController
             'url'             => 'max:500',
             'provider'        => 'max:128',
             'group_id'        => 'integer',
+            'parent_id'       => 'integer',
             'expire_time'     => 'max:40',
             'auto_detect'     => 'boolean',
             'price'           => 'float|egt:0',
@@ -212,6 +213,11 @@ class Asset extends ApiController
         }
         if (isset($data['currency'])) {
             $data['currency'] = strtoupper($data['currency']);
+        }
+        if (!empty($data['parent_id'])) {
+            // 只能关联到本空间的域名
+            $ok = AssetModel::where('tenant_id', $this->tenantId())->where('id', (int) $data['parent_id'])->where('type', 'domain')->count();
+            $data['parent_id'] = $ok && $data['type'] === 'ssl' ? (int) $data['parent_id'] : 0;
         }
         if (array_key_exists('group_id', $data)) {
             $data['group_id'] = GroupModel::resolveId($this->tenantId(), (int) $data['group_id']);

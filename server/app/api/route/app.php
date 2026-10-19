@@ -52,6 +52,10 @@ Route::group(function () {
     Route::get('imports/:id', 'Import/read');
     Route::delete('imports/:id', 'Import/delete');
 
+    Route::get('domains', 'Domain/index');
+    Route::get('domains/stats', 'Domain/stats');
+    Route::post('assets/batch', 'Domain/batch');
+
     Route::get('assets/export', 'Asset/export');
     Route::get('assets', 'Asset/index');
     Route::post('assets', 'Asset/save');
