@@ -23,9 +23,13 @@ class TemplateService
 {
     /** 场景分组（用于界面展示） */
     public const GROUPS = [
-        'expire' => ['domain_expire', 'ssl_expire', 'asset_expire', 'task_due', 'digest'],
-        'event'  => ['domain_renewed', 'ns_changed', 'domain_status', 'ssl_renewed', 'ssl_error', 'ssl_renew_stuck', 'detect_failed'],
+        'domain'  => ['domain_expire', 'domain_renewed', 'ns_changed', 'domain_status'],
+        'ssl'     => ['ssl_expire', 'ssl_renewed', 'ssl_error', 'ssl_renew_stuck'],
+        'general' => ['asset_expire', 'task_due', 'digest', 'detect_failed'],
     ];
+
+    /** 监控事件场景（预览时取真实事件数据） */
+    public const EVENT_SCENES = ['domain_renewed', 'ns_changed', 'domain_status', 'ssl_renewed', 'ssl_error', 'ssl_renew_stuck', 'detect_failed'];
 
     /** 有「简洁」预设的场景 */
     private const SIMPLE_PRESETS = ['domain_expire', 'ssl_expire', 'asset_expire', 'task_due', 'digest'];

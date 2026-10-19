@@ -14,7 +14,9 @@ use think\facade\Db;
 use Throwable;
 
 /**
- * 域名批量导入：创建域名资产，并可按主机名（@ / www / 自定义子域）同时创建 SSL 证书监控
+ * 批量导入：
+ *  - 域名到期：as_domain=1
+ *  - SSL 证书监控：ssl_direct=1 按表格中的主机名（可带端口）创建；或 ssl_hosts 按域名 + 前缀（@ / www / 子域）生成
  */
 class ImportService
 {
@@ -22,7 +24,7 @@ class ImportService
 
     /**
      * @param array $items   [{domain, expire, registrar, notes, price}]，expire 为用户时区的 "Y-m-d H:i"
-     * @param array $options {group_id, as_domain, ssl_hosts[], auto_detect, domain_offsets, ssl_offsets, existing, currency, source}
+     * @param array $options {group_id, as_domain, ssl_hosts[], ssl_direct, auto_detect, domain_offsets, ssl_offsets, existing, currency, source}
      */
     public static function import(Tenant $tenant, User $user, array $items, array $options): array
     {
@@ -40,10 +42,24 @@ class ImportService
         $sslOff     = implode(',', parse_offsets((string) ($options['ssl_offsets'] ?? '14,7,3,1'))) ?: '14,7,3,1';
         $sslHosts   = self::sslHostPrefixes((array) ($options['ssl_hosts'] ?? []));
 
+        $direct = !empty($options['ssl_direct']);
+
         // 1. 规范化
-        $rows    = [];
-        $invalid = [];
+        $rows     = [];
+        $invalid  = [];
+        $rawHosts = [];
         foreach ($items as $i => $item) {
+            if ($direct) {
+                // 直接按主机名创建 SSL 监控（host 或 host:port）
+                $host = SslDetector::normalize((string) ($item['domain'] ?? ''));
+                $name = (string) preg_replace('/:\d+$/', '', $host);
+                if (!preg_match('/^([a-z0-9-]+\.)+[a-z0-9-]{2,}$/', $name)) {
+                    $invalid[] = ['index' => $i, 'value' => (string) ($item['domain'] ?? '')];
+                    continue;
+                }
+                $rawHosts[$host] = DomainDetector::normalize($name);
+                continue;
+            }
             $domain = DomainDetector::normalize((string) ($item['domain'] ?? ''));
             if (!preg_match('/^([a-z0-9-]+\.)+[a-z0-9-]{2,}$/', $domain) || strlen($domain) > 253) {
                 $invalid[] = ['index' => $i, 'value' => (string) ($item['domain'] ?? '')];
@@ -60,8 +76,11 @@ class ImportService
             ];
         }
 
-        // 2. 计划创建的 SSL 主机
+        // 2. 计划创建的 SSL 主机：ssl_direct 时按表格中的主机名（可带端口）；否则按域名 + 前缀生成
         $sslPlan = [];
+        foreach ($rawHosts as $host => $domain) {
+            $sslPlan[$host] = $domain;
+        }
         foreach (array_keys($rows) as $domain) {
             foreach ($sslHosts as $prefix) {
                 $host = SslDetector::normalize($prefix === '@' ? $domain : "{$prefix}.{$domain}");

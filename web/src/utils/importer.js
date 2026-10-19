@@ -35,6 +35,16 @@ export function normalizeDomain(input) {
   return v
 }
 
+/** SSL 主机：去掉协议和路径，保留端口，不去 www. */
+export function normalizeHost(input) {
+  let v = String(input ?? '').trim().toLowerCase()
+  if (!v) return ''
+  v = v.replace(/^[a-z]+:\/\//, '').replace(/[/?#].*$/, '').replace(/\.$/, '').replace(/^\*\./, '')
+  const m = v.match(/^(.+?)(?::(\d{1,5}))?$/)
+  if (!m) return ''
+  return m[2] && m[2] !== '443' ? `${m[1]}:${m[2]}` : m[1]
+}
+
 export function isDomain(v) {
   const d = normalizeDomain(v)
   if (!d || d.length > 253 || FILE_EXT_RE.test(d)) return false
@@ -175,6 +185,12 @@ export function parseText(text) {
 
   const rows = []
   for (const line of text.split(/\r?\n/)) {
+    const token = line.trim()
+    // 一行只有一个词（如 https://a.com/x、mail.a.com:8443）：原样保留，由后续按模式规范化
+    if (/^\S+$/.test(token) && extractDomains(token.replace(/:\d+(?=$|\/)/, '')).length === 1) {
+      rows.push([token])
+      continue
+    }
     const domains = extractDomains(line)
     if (!domains.length) continue
     const date = line.match(/\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}日?(?:[ T]\d{1,2}:\d{2})?|\d{1,2}[-/]\d{1,2}[-/]\d{4}|\d{1,2}[- ][A-Za-z]{3,9}[-, ]+\d{4}/)
@@ -288,15 +304,15 @@ export function detectColumns(rows) {
  * 根据列映射生成导入条目（按域名去重）
  * @returns {{ items: Array, invalid: Array<{row:number, value:string}> }}
  */
-export function buildItems(rows, headerIndex, mapping, dateOrder = 'auto') {
+export function buildItems(rows, headerIndex, mapping, dateOrder = 'auto', { keepHost = false } = {}) {
   const items = []
   const invalid = []
   const seen = new Set()
   rows.slice(headerIndex + 1).forEach((r, i) => {
     const raw = mapping.domain !== null ? r[mapping.domain] : ''
-    const domain = normalizeDomain(raw)
+    const domain = keepHost ? normalizeHost(raw) : normalizeDomain(raw)
     if (!domain) return
-    if (!isDomain(domain)) { invalid.push({ row: headerIndex + i + 2, value: String(raw) }); return }
+    if (!isDomain(domain.replace(/:\d+$/, ''))) { invalid.push({ row: headerIndex + i + 2, value: String(raw) }); return }
     if (seen.has(domain)) return
     seen.add(domain)
     const price = mapping.price !== null ? parseFloat(String(r[mapping.price]).replace(/[^\d.]/g, '')) : NaN

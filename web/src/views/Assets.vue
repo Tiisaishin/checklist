@@ -6,9 +6,6 @@
         <n-button @click="exportCsv">
           <template #icon><n-icon><DownloadOutline /></n-icon></template>{{ t('importer.export') }}
         </n-button>
-        <n-button @click="importVisible = true" :disabled="!auth.canWrite">
-          <template #icon><n-icon><CloudUploadOutline /></n-icon></template>{{ t('importer.button') }}
-        </n-button>
         <n-button type="primary" @click="openForm()" :disabled="!auth.canWrite">
           <template #icon><n-icon><AddOutline /></n-icon></template>{{ t('asset.add') }}
         </n-button>
@@ -30,8 +27,7 @@
       :scroll-x="1030" size="small" @update:page="changePage"
     />
 
-    <ImportWizard v-model:show="importVisible" :groups="groups" @done="load" />
-    <AssetForm v-model:show="formVisible" :asset="editing" :groups="groups" :channels="channels" @saved="onSaved" @groups-changed="loadGroups" />
+    <AssetForm :types="types" v-model:show="formVisible" :asset="editing" :groups="groups" :channels="channels" @saved="onSaved" @groups-changed="loadGroups" />
 
     <AssetDetail v-model:show="detailVisible" :asset="detail" @edit="openForm" @changed="load" />
   </div>
@@ -49,12 +45,11 @@ import { useAuth } from '../stores/auth'
 import DaysTag from '../components/DaysTag.vue'
 import AssetForm from '../components/AssetForm.vue'
 import GroupTag from '../components/GroupTag.vue'
-import ImportWizard from '../components/ImportWizard.vue'
 import AssetDetail from '../components/AssetDetail.vue'
 
 const { t } = useI18n()
 const auth = useAuth()
-const types = ['domain', 'ssl', 'server', 'subscription', 'license', 'account', 'other']
+const types = ['server', 'subscription', 'license', 'account', 'other']
 
 const filters = reactive({ type: '', group_id: Number(useRoute().query.group_id) || null, keyword: '', status: 'active' })
 const rows = ref([])
@@ -63,7 +58,6 @@ const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 })
 const groups = ref([])
 const channels = ref([])
 const formVisible = ref(false)
-const importVisible = ref(false)
 const editing = ref(null)
 const detailVisible = ref(false)
 const detail = ref(null)
@@ -127,7 +121,6 @@ function detectIcon(r) {
 
 function moreOptions(r) {
   const list = []
-  if (['domain', 'ssl'].includes(r.type)) list.push({ key: 'detect', label: t('asset.detect') })
   list.push(
     { key: 'ack', label: t('asset.ack'), disabled: r.acked },
     { key: 'snooze', label: t('task.snooze1d') },
@@ -166,7 +159,7 @@ async function renew(r) {
 }
 
 function exportCsv() {
-  const qs = new URLSearchParams({ status: filters.status, type: filters.type || '', group_id: filters.group_id || '' })
+  const qs = new URLSearchParams({ status: filters.status, type: filters.type || types.join(','), group_id: filters.group_id || '' })
   download(`/api/assets/export?${qs}`, `assets-${new Date().toISOString().slice(0, 10)}.csv`)
 }
 
@@ -189,7 +182,7 @@ function onSaved() {
 async function load() {
   loading.value = true
   try {
-    const res = await api.get('/api/assets', { ...filters, page: pagination.page, page_size: pagination.pageSize })
+    const res = await api.get('/api/assets', { ...filters, exclude_monitors: 1, page: pagination.page, page_size: pagination.pageSize })
     rows.value = res.items
     pagination.itemCount = res.total
   } finally {

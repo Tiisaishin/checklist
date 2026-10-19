@@ -74,7 +74,7 @@ class Template extends ApiController
         $assetId = (int) $this->request->param('asset_id');
         $taskId  = (int) $this->request->param('task_id');
         if ($assetId && ($asset = Asset::where('tenant_id', $this->tenantId())->find($assetId))) {
-            if (isset(array_flip(TemplateService::GROUPS['event'])[$scene])) {
+            if (in_array($scene, TemplateService::EVENT_SCENES, true)) {
                 $event = AssetEvent::where('asset_id', $asset->id)->where('type', $scene)->order('id', 'desc')->find();
                 $vars  = $event ? TemplateService::eventVars($asset, $user, $scene, (array) $event->data) : null;
             } elseif (in_array($scene, ['domain_expire', 'ssl_expire', 'asset_expire'], true)) {

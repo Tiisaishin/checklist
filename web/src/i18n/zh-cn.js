@@ -8,7 +8,7 @@ export default {
     default: '默认', reset: '恢复默认', preview: '预览', test: '测试', close: '关闭',
   },
   nav: {
-    dashboard: '概览', assets: '资产到期', tasks: '周期检查', domains: '域名与证书', groups: '信息分组', members: '团队成员', vault: '保险箱', channels: '通知渠道', templates: '通知模板',
+    dashboard: '概览', assets: '其他资产', tasks: '周期检查', domains: '域名到期', ssl: 'SSL 证书', groups: '信息分组', members: '团队成员', vault: '保险箱', channels: '通知渠道', templates: '通知模板',
     notifications: '通知记录', settings: '个人设置', admin: '平台管理', adminOverview: '运营概览', adminUsers: '用户',
     adminTenants: '空间', adminPlans: '套餐', adminSettings: '系统设置', logout: '退出登录', theme: '切换主题',
   },
@@ -23,11 +23,11 @@ export default {
     bindNow: '立即绑定 Telegram', empty: '暂无，一切正常 🎉',
   },
   asset: {
-    title: '资产到期', add: '添加资产', type: '类型', name: '名称', identifier: '标识', identifierHint: {
+    title: '其他资产到期', add: '添加资产', type: '类型', name: '名称', identifier: '标识', identifierHint: {
       domain: '域名，例如 example.com', ssl: '主机，例如 example.com 或 example.com:8443', default: '可选，例如账号 / IP / 订单号',
     },
     url: '管理地址', provider: '服务商', expire: '到期时间', daysLeft: '剩余', autoDetect: '自动探测到期时间',
-    autoDetectHint: '定期通过 RDAP/WHOIS 或 TLS 握手获取到期时间，续费后自动更新',
+    autoDetectHint: '定期通过 RDAP / WHOIS 查询到期时间，续费后自动更新',
     price: '续费价格', currency: '币种', cycle: '续费周期', autoRenew: '已开启自动续费', group: '分组',
     offsets: '提前提醒（天）', offsetsHint: '可多选或输入，例如 30、7、3、1、0', overdueRemind: '过期后每天提醒',
     channels: '提醒渠道', channelsHint: '留空则使用所在分组的渠道', detect: '立即检测', renew: '已续费',
@@ -42,13 +42,13 @@ export default {
     events: '变化记录', noEvents: '暂无变化', nextDetect: '下次检测', failCount: '连续失败',
   },
   importer: {
-    title: '批量导入域名', button: '批量导入', export: '导出 CSV',
+    title: '批量导入域名', titleSsl: '批量导入 SSL 监控', button: '批量导入', export: '导出 CSV',
     steps: { source: '选择数据', mapping: '确认列', options: '导入选项', result: '完成' },
     upload: '点击或拖拽文件到这里', uploadHint: '支持 .xlsx / .csv / .txt，文件只在浏览器中解析，不会上传',
     xlsUnsupported: '暂不支持旧版 .xls，请在 Excel 中另存为 .xlsx 或 .csv 后再导入', paste: '或者直接粘贴',
     pastePlaceholder: '每行一个域名，也可以粘贴从表格复制的内容或任意文本，系统会自动提取域名', parse: '解析',
     noDomain: '没有找到域名，请检查文件内容', detected: '识别到 {n} 行', preset: '已识别平台：{name}', columns: '列对应关系',
-    fields: { domain: '域名', expire: '到期时间', registrar: '注册商', notes: '备注', price: '价格' }, notMapped: '不导入',
+    fields: { domain: '域名', host: '主机', expire: '到期时间', registrar: '注册商', notes: '备注', price: '价格' }, notMapped: '不导入',
     dateOrder: '日期格式', dateOrders: { auto: '自动', mdy: '月/日/年', dmy: '日/月/年' },
     ambiguous: '存在类似 03/04/2027 的日期，请确认是「月/日/年」还是「日/月/年」', preview: '预览（前 20 行）',
     valid: '有效域名 {n} 个', invalid: '无效 {n} 行', noExpire: '{n} 个没有到期时间（将自动探测）',
@@ -56,10 +56,16 @@ export default {
     sslCustomPlaceholder: '例如 api, mail（逗号分隔）', autoDetect: '自动探测到期时间（推荐，导入的时间作为备用）',
     existing: '已存在的域名', existingSkip: '跳过', existingUpdate: '用表格中的到期时间和注册商更新',
     domainOffsets: '域名提前提醒（天）', sslOffsets: 'SSL 提前提醒（天）', start: '开始导入',
-    summary: '新增域名 {domains} 个、SSL 监控 {ssl} 个，更新 {updated} 个，跳过 {skipped} 个（已存在）',
+    summary: '新增 {created} 个，更新 {updated} 个，跳过 {skipped} 个（已存在）',
+    sslSource: '证书监控对象', sslDirect: '按表格中的主机名（支持子域与端口，如 mail.example.com:8443）', sslPrefix: '把每个域名生成以下主机：',
     detecting: '后台正在探测到期时间：{done} / {total}', detectFailed: '{n} 个探测失败，可稍后在列表中查看原因或手动填写',
     detectHint: '探测由后台定时任务完成，可以关闭此窗口', undo: '撤销本次导入', undone: '已撤销，删除了 {n} 条',
     invalidList: '无效行', viewList: '查看列表', again: '继续导入', history: '最近导入', reverted: '已撤销',
+  },
+  monitor: {
+    title: { domain: '域名到期', ssl: 'SSL 证书监控' }, add: { domain: '添加域名', ssl: '添加证书监控' },
+    stats: { total: '监控中', soon: '{days} 天内到期', expired: '已过期', abnormal: '异常' },
+    filters: { all: '全部', soon: '{days} 天内', expired: '已过期', abnormal: '异常' },
   },
   domain: {
     title: '域名与证书', desc: '每个域名一行，下面列出它的 SSL 证书。可以多选后批量操作。',
@@ -130,7 +136,7 @@ export default {
   },
   template: {
     title: '通知模板', desc: '每位用户可以自定义自己收到的消息内容。',
-    groups: { expire: '到期提醒', event: '监控事件' }, presets: { detailed: '详细', simple: '简洁', en: 'English' }, usePreset: '套用预设',
+    groups: { domain: '域名', ssl: 'SSL 证书', general: '通用' }, presets: { detailed: '详细', simple: '简洁', en: 'English' }, usePreset: '套用预设',
     previewWith: '预览数据', sample: '示例数据',
     syntax: '语法：{a} 插入变量；{b} 变量有值时才显示中间内容；{c} 变量为空时才显示；一行里的变量都为空时整行自动隐藏。支持 Telegram HTML：<b> <i> <u> <s> <code> <a href="">',
     scenes: { domain_expire: '域名到期', ssl_expire: 'SSL 证书到期', digest: '每日汇总', asset_expire: '其他资产到期', task_due: '周期检查', domain_renewed: '域名续费成功', ns_changed: 'DNS 服务器变化', domain_status: '域名状态异常', ssl_renewed: 'SSL 证书已更新', ssl_error: 'SSL 证书异常', ssl_renew_stuck: 'SSL 自动续期可能失败', detect_failed: '连续检测失败' }, variables: '可用变量（点击插入）', custom: '已自定义',

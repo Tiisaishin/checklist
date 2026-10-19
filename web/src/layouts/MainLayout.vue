@@ -79,6 +79,7 @@ const menuOptions = computed(() => {
   const items = [
     { key: 'dashboard', label: t('nav.dashboard'), icon: icon(GridOutline) },
     { key: 'domains', label: t('nav.domains'), icon: icon(GlobeOutline) },
+    { key: 'ssl', label: t('nav.ssl'), icon: icon(ShieldCheckmarkOutline) },
     { key: 'assets', label: t('nav.assets'), icon: icon(TimeOutline) },
     { key: 'tasks', label: t('nav.tasks'), icon: icon(CheckboxOutline) },
     { key: 'vault', label: t('nav.vault'), icon: icon(LockClosedOutline) },

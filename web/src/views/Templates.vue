@@ -70,7 +70,7 @@ import { api, message } from '../utils/api'
 
 const { t } = useI18n()
 const groups = ref({})
-const tab = ref('expire')
+const tab = ref('domain')
 const current = ref('domain_expire')
 const loading = ref(false)
 const previews = reactive({})

@@ -52,8 +52,9 @@ Route::group(function () {
     Route::get('imports/:id', 'Import/read');
     Route::delete('imports/:id', 'Import/delete');
 
-    Route::get('domains', 'Domain/index');
-    Route::get('domains/stats', 'Domain/stats');
+    // 域名到期、SSL 证书监控（kind=domain|ssl）
+    Route::get('monitors', 'Domain/index');
+    Route::get('monitors/stats', 'Domain/stats');
     Route::post('assets/batch', 'Domain/batch');
 
     Route::get('assets/export', 'Asset/export');

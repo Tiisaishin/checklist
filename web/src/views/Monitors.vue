@@ -1,31 +1,29 @@
 <template>
   <div class="page">
     <div class="page-header">
-      <h2>{{ t('domain.title') }}</h2>
+      <h2>{{ t('monitor.title.' + kind) }}</h2>
       <n-space>
         <n-button @click="exportCsv"><template #icon><n-icon><DownloadOutline /></n-icon></template>{{ t('importer.export') }}</n-button>
-        <n-button type="primary" :disabled="!auth.canWrite" @click="importVisible = true">
+        <n-button :disabled="!auth.canWrite" @click="importVisible = true">
           <template #icon><n-icon><CloudUploadOutline /></n-icon></template>{{ t('importer.button') }}
+        </n-button>
+        <n-button type="primary" :disabled="!auth.canWrite" @click="edit(null)">
+          <template #icon><n-icon><AddOutline /></n-icon></template>{{ t('monitor.add.' + kind) }}
         </n-button>
       </n-space>
     </div>
 
     <div class="grid-stats">
       <n-card v-for="s in statCards" :key="s.key" size="small" hoverable class="stat" @click="applyStat(s)">
-        <n-statistic :label="t('domain.stats.' + s.key)">
+        <n-statistic :label="t('monitor.stats.' + s.key, { days: kind === 'ssl' ? 14 : 30 })">
           <span :style="{ color: s.color }">{{ stats[s.key] ?? 0 }}</span>
         </n-statistic>
       </n-card>
     </div>
 
-    <n-tabs v-model:value="kind" type="line" @update:value="reload">
-      <n-tab name="domain">{{ t('domain.tabs.domain') }}</n-tab>
-      <n-tab name="ssl">{{ t('domain.tabs.ssl') }} <n-badge v-if="stats.orphan_certs" :value="stats.orphan_certs" :max="999" type="info" style="margin-left: 6px" /></n-tab>
-    </n-tabs>
-
-    <div class="toolbar" style="margin-top: 12px">
+    <div class="toolbar">
       <n-radio-group v-model:value="filters.status" size="small" @update:value="reload">
-        <n-radio-button v-for="f in ['all', 'soon', 'expired', 'abnormal']" :key="f" :value="f">{{ t('domain.filters.' + f) }}</n-radio-button>
+        <n-radio-button v-for="f in ['all', 'soon', 'expired', 'abnormal']" :key="f" :value="f">{{ t('monitor.filters.' + f, { days: kind === 'ssl' ? 14 : 30 }) }}</n-radio-button>
       </n-radio-group>
       <n-select v-model:value="filters.group_id" :options="groupOptions" clearable size="small" style="width: 160px" :placeholder="t('asset.group')" @update:value="reload" />
       <n-input v-model:value="filters.keyword" size="small" clearable style="width: 220px" :placeholder="t('common.search')" @keyup.enter="reload" @clear="reload" />
@@ -35,7 +33,6 @@
     <!-- 批量操作栏 -->
     <div v-if="checked.length" class="batch">
       <span>{{ t('domain.selected', { n: checked.length }) }}</span>
-      <n-checkbox v-if="kind === 'domain'" v-model:checked="withCerts" size="small">{{ t('domain.withCerts') }}</n-checkbox>
       <span class="spacer" />
       <n-button size="small" @click="batch('detect')">{{ t('domain.batch.detect') }}</n-button>
       <n-button size="small" @click="openBatch('group')">{{ t('domain.batch.group') }}</n-button>
@@ -50,27 +47,24 @@
       v-model:checked-row-keys="checked" :scroll-x="1100" size="small" @update:page="changePage"
     />
 
-    <ImportWizard v-model:show="importVisible" :groups="groups" @done="reloadAll" />
+    <ImportWizard v-model:show="importVisible" :groups="groups" :mode="kind" @done="reloadAll" />
     <AssetDetail v-model:show="detailVisible" :asset="viewing" @edit="edit" @changed="reloadAll" />
-    <AssetForm v-model:show="formVisible" :asset="editing" :groups="groups" :channels="channels" @saved="onSaved" @groups-changed="loadGroups" />
+    <AssetForm v-model:show="formVisible" :asset="editing" :groups="groups" :channels="channels" :types="[kind]" @saved="onSaved" @groups-changed="loadGroups" />
 
     <n-modal v-model:show="batchVisible" preset="dialog" :title="t('domain.batch.' + batchAction)" :positive-text="t('common.save')" :negative-text="t('common.cancel')" @positive-click="submitBatch">
       <n-select v-if="batchAction === 'group'" v-model:value="batchValue" :options="groupOptions" />
       <n-select v-else v-model:value="batchOffsets" multiple tag filterable :options="offsetOptions" />
     </n-modal>
 
-    <n-modal v-model:show="certVisible" preset="dialog" :title="t('domain.addCert')" :positive-text="t('common.save')" :negative-text="t('common.cancel')" @positive-click="addCert">
-      <n-input v-model:value="certHost" :placeholder="t('domain.addCertHint')" class="mono" />
-    </n-modal>
   </div>
 </template>
 
 <script setup>
-import { computed, h, onMounted, reactive, ref } from 'vue'
+import { computed, h, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { NButton, NDropdown, NIcon, NTag, NTooltip } from 'naive-ui'
-import { DownloadOutline, CloudUploadOutline, EllipsisHorizontal, AlertCircleOutline, ShieldCheckmarkOutline } from '@vicons/ionicons5'
+import { AddOutline, DownloadOutline, CloudUploadOutline, EllipsisHorizontal, AlertCircleOutline, ShieldCheckmarkOutline } from '@vicons/ionicons5'
 import { api, confirmDelete, download, message } from '../utils/api'
 import { fmt, fmtDate } from '../utils/time'
 import { useAuth } from '../stores/auth'
@@ -84,7 +78,8 @@ const { t } = useI18n()
 const auth = useAuth()
 const route = useRoute()
 
-const kind = ref('domain')
+const props = defineProps({ kind: { type: String, default: 'domain' } })
+const kind = computed(() => props.kind)
 const filters = reactive({ status: route.query.status || 'all', group_id: Number(route.query.group_id) || null, keyword: '', archived: false })
 const rows = ref([])
 const stats = ref({})
@@ -93,7 +88,6 @@ const channels = ref([])
 const loading = ref(false)
 const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 })
 const checked = ref([])
-const withCerts = ref(true)
 const importVisible = ref(false)
 const detailVisible = ref(false)
 const viewing = ref(null)
@@ -103,19 +97,14 @@ const batchVisible = ref(false)
 const batchAction = ref('group')
 const batchValue = ref(null)
 const batchOffsets = ref([])
-const certVisible = ref(false)
-const certHost = ref('')
-const certParent = ref(null)
 
 const groupOptions = computed(() => groups.value.map((g) => ({ label: g.name, value: g.id })))
 const offsetOptions = ['90', '60', '30', '14', '7', '3', '1', '0'].map((v) => ({ value: v, label: v }))
 const statCards = [
-  { key: 'domains', color: '', kind: 'domain', status: 'all' },
-  { key: 'domains_soon', color: '#f0a020', kind: 'domain', status: 'soon' },
-  { key: 'domains_expired', color: '#d03050', kind: 'domain', status: 'expired' },
-  { key: 'certs', color: '', kind: 'ssl', status: 'all' },
-  { key: 'certs_soon', color: '#f0a020', kind: 'domain', status: 'all' },
-  { key: 'abnormal', color: '#d03050', kind: 'domain', status: 'abnormal' },
+  { key: 'total', color: '', status: 'all' },
+  { key: 'soon', color: '#f0a020', status: 'soon' },
+  { key: 'expired', color: '#d03050', status: 'expired' },
+  { key: 'abnormal', color: '#d03050', status: 'abnormal' },
 ]
 const moreBatch = computed(() => [
   { key: 'enableDetect', label: t('domain.batch.enableDetect') },
@@ -124,21 +113,6 @@ const moreBatch = computed(() => [
   { type: 'divider' },
   { key: 'delete', label: t('domain.batch.delete') },
 ])
-
-function certTag(c) {
-  const days = c.days_left
-  const type = c.issue || c.detect_status === 'failed' || (days !== null && days < 0) ? 'error' : days !== null && days <= 14 ? 'warning' : c.expire_time ? 'success' : 'default'
-  return h(NTooltip, null, {
-    trigger: () => h(NTag, { size: 'small', type, bordered: false, style: 'cursor:pointer', onClick: (e) => { e.stopPropagation(); open(c) } }, () => [
-      c.name, days !== null ? ` · ${days}d` : ' · …',
-    ]),
-    default: () => [
-      `${c.provider || ''} ${c.expire_time ? '→ ' + fmtDate(c.expire_time) : ''}`,
-      c.issue ? ` · ${t('asset.issues.' + c.issue)}` : '',
-      c.detect_status === 'failed' ? ` · ${c.detect_error}` : '',
-    ].join(''),
-  })
-}
 
 function statusIcon(r) {
   if (r.detect_status === 'failed') {
@@ -154,7 +128,7 @@ const columns = computed(() => {
   const list = [
     { type: 'selection', fixed: 'left' },
     {
-      title: kind.value === 'domain' ? t('importer.fields.domain') : t('vault.url'), key: 'name', minWidth: 200, fixed: 'left',
+      title: kind.value === 'domain' ? t('importer.fields.domain') : t('importer.fields.host'), key: 'name', minWidth: 200, fixed: 'left',
       render: (r) => h('div', { style: 'cursor:pointer', onClick: () => open(r) }, [
         h('div', { style: 'font-weight:500' }, r.name),
         r.provider ? h('div', { class: 'muted' }, r.provider) : null,
@@ -171,21 +145,15 @@ const columns = computed(() => {
     },
   ]
   if (kind.value === 'domain') {
-    list.push(
-      {
-        title: t('domain.certs'), key: 'certs', minWidth: 260,
-        render: (r) => h('div', { style: 'display:flex;gap:4px;flex-wrap:wrap;align-items:center' }, [
-          ...r.certs.map(certTag),
-          auth.canWrite ? h(NButton, { size: 'tiny', quaternary: true, onClick: () => { certParent.value = r; certHost.value = ''; certVisible.value = true } }, () => '+') : null,
-        ]),
-      },
-      {
-        title: t('domain.dns'), key: 'dns', width: 170, ellipsis: { tooltip: true },
-        render: (r) => h('span', { class: 'mono muted' }, ((r.detect_meta || {}).nameservers || []).slice(0, 2).join(', ') || '-'),
-      },
-    )
+    list.push({
+      title: t('domain.dns'), key: 'dns', minWidth: 200, ellipsis: { tooltip: true },
+      render: (r) => h('span', { class: 'mono muted' }, ((r.detect_meta || {}).nameservers || []).slice(0, 2).join(', ') || '-'),
+    })
   } else {
-    list.push({ title: t('domain.issuer'), key: 'provider', width: 180, ellipsis: { tooltip: true } })
+    list.push(
+      { title: t('domain.issuer'), key: 'provider', width: 180, ellipsis: { tooltip: true }, render: (r) => r.provider || ((r.detect_meta || {}).issuer_cn) || '-' },
+      { title: t('domain.san'), key: 'san', minWidth: 200, ellipsis: { tooltip: true }, render: (r) => h('span', { class: 'mono muted' }, ((r.detect_meta || {}).san || []).slice(0, 3).join(', ') || '-') },
+    )
   }
   list.push(
     { title: t('asset.group'), key: 'group_id', width: 120, render: (r) => h(GroupTag, { group: groups.value.find((g) => g.id === r.group_id) }) },
@@ -193,11 +161,17 @@ const columns = computed(() => {
     {
       title: t('common.actions'), key: 'actions', width: 150, fixed: 'right',
       render: (r) => h('div', { style: 'display:flex;gap:6px' }, [
-        h(NButton, { size: 'tiny', secondary: true, type: 'primary', disabled: !auth.canWrite, onClick: () => renew(r) }, () => t('asset.renew')),
+        kind.value === 'ssl'
+          ? h(NButton, { size: 'tiny', secondary: true, type: 'primary', disabled: !auth.canWrite, onClick: () => rowAction('detect', r) }, () => t('asset.detect'))
+          : h(NButton, { size: 'tiny', secondary: true, type: 'primary', disabled: !auth.canWrite, onClick: () => renew(r) }, () => t('asset.renew')),
         h(NButton, { size: 'tiny', secondary: true, disabled: !auth.canWrite, onClick: () => edit(r) }, () => t('common.edit')),
         h(NDropdown, {
           trigger: 'click',
-          options: [{ key: 'detail', label: t('vault.detail') }, { key: 'detect', label: t('asset.detect') }, { key: 'ack', label: t('asset.ack') }, { type: 'divider' }, { key: 'delete', label: t('common.delete') }],
+          options: [
+            { key: 'detail', label: t('vault.detail') },
+            ...(kind.value === 'ssl' ? [] : [{ key: 'detect', label: t('asset.detect') }]),
+            { key: 'ack', label: t('asset.ack') }, { type: 'divider' }, { key: 'delete', label: t('common.delete') },
+          ],
           onSelect: (k) => rowAction(k, r),
         }, () => h(NButton, { size: 'tiny', quaternary: true }, () => h(NIcon, null, () => h(EllipsisHorizontal)))),
       ]),
@@ -209,7 +183,7 @@ const columns = computed(() => {
 async function load() {
   loading.value = true
   try {
-    const res = await api.get('/api/domains', {
+    const res = await api.get('/api/monitors', {
       kind: kind.value, status: filters.status, group_id: filters.group_id, keyword: filters.keyword,
       archived: filters.archived ? 1 : '', page: pagination.page, page_size: pagination.pageSize,
     })
@@ -220,14 +194,13 @@ async function load() {
     loading.value = false
   }
 }
-async function loadStats() { stats.value = await api.get('/api/domains/stats', null, { silent: true }).catch(() => ({})) }
+async function loadStats() { stats.value = await api.get('/api/monitors/stats', { kind: kind.value }, { silent: true }).catch(() => ({})) }
 async function loadGroups() { groups.value = await api.get('/api/groups') }
 function reload() { pagination.page = 1; checked.value = []; load() }
 function reloadAll() { load(); loadStats() }
 function changePage(p) { pagination.page = p; load() }
 
 function applyStat(s) {
-  kind.value = s.kind
   filters.status = s.status
   reload()
 }
@@ -249,7 +222,7 @@ async function rowAction(key, r) {
     res.detect_status === 'ok' ? message.success(fmtDate(res.expire_time)) : message.error(res.detect_error)
   }
   if (key === 'ack') await api.post(`/api/assets/${r.id}/ack`)
-  if (key === 'delete') return confirmDelete(async () => { await api.post('/api/assets/batch', { ids: [r.id], action: 'delete', with_certs: true }); reloadAll() })
+  if (key === 'delete') return confirmDelete(async () => { await api.post('/api/assets/batch', { ids: [r.id], action: 'delete' }); reloadAll() })
   reloadAll()
 }
 
@@ -268,7 +241,7 @@ async function batch(action, value = '') {
   const map = { enableDetect: ['auto_detect', '1'], disableDetect: ['auto_detect', '0'] }
   const [act, val] = map[action] || [action, value]
   const run = async () => {
-    const res = await api.post('/api/assets/batch', { ids: checked.value, action: act, value: val, with_certs: kind.value === 'domain' && withCerts.value })
+    const res = await api.post('/api/assets/batch', { ids: checked.value, action: act, value: val })
     message.success(act === 'detect' ? t('domain.detectQueued') : t('domain.affected', { n: res.affected }))
     checked.value = []
     reloadAll()
@@ -277,20 +250,13 @@ async function batch(action, value = '') {
   return run()
 }
 
-async function addCert() {
-  const host = certHost.value.trim()
-  if (!host) return false
-  const p = certParent.value
-  await api.post('/api/assets', {
-    type: 'ssl', name: host, identifier: host, auto_detect: true, group_id: p.group_id, parent_id: p.id, remind_offsets: '14,7,3,1',
-  })
-  reloadAll()
+function exportCsv() {
+  const qs = new URLSearchParams({ type: kind.value, group_id: filters.group_id || '', status: filters.archived ? 'archived' : 'active' })
+  download(`/api/assets/export?${qs}`, `${kind.value === 'ssl' ? 'ssl' : 'domains'}-${new Date().toISOString().slice(0, 10)}.csv`)
 }
 
-function exportCsv() {
-  const qs = new URLSearchParams({ type: kind.value === 'domain' ? 'domain,ssl' : 'ssl', group_id: filters.group_id || '', status: filters.archived ? 'archived' : 'active' })
-  download(`/api/assets/export?${qs}`, `domains-${new Date().toISOString().slice(0, 10)}.csv`)
-}
+// 两个路由共用此组件：切换时重置
+watch(kind, () => { Object.assign(filters, { status: 'all', keyword: '', archived: false }); checked.value = []; reload(); loadStats() })
 
 onMounted(async () => {
   load()

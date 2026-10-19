@@ -8,7 +8,7 @@ export default {
     default: 'Default', reset: 'Reset to default', preview: 'Preview', test: 'Test', close: 'Close',
   },
   nav: {
-    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', domains: 'Domains & SSL', groups: 'Groups', members: 'Team', vault: 'Vault', channels: 'Channels', templates: 'Templates',
+    dashboard: 'Overview', assets: 'Other assets', tasks: 'Recurring checks', domains: 'Domain expiry', ssl: 'SSL certificates', groups: 'Groups', members: 'Team', vault: 'Vault', channels: 'Channels', templates: 'Templates',
     notifications: 'Notification log', settings: 'Settings', admin: 'Platform', adminOverview: 'Overview', adminUsers: 'Users',
     adminTenants: 'Workspaces', adminPlans: 'Plans', adminSettings: 'System settings', logout: 'Sign out', theme: 'Toggle theme',
   },
@@ -23,11 +23,11 @@ export default {
     bindNow: 'Connect Telegram', empty: 'Nothing here, all good 🎉',
   },
   asset: {
-    title: 'Expiring assets', add: 'Add asset', type: 'Type', name: 'Name', identifier: 'Identifier', identifierHint: {
+    title: 'Other expiring assets', add: 'Add asset', type: 'Type', name: 'Name', identifier: 'Identifier', identifierHint: {
       domain: 'Domain, e.g. example.com', ssl: 'Host, e.g. example.com or example.com:8443', default: 'Optional, e.g. account / IP / order no.',
     },
     url: 'Console URL', provider: 'Provider', expire: 'Expires', daysLeft: 'Left', autoDetect: 'Auto-detect expiry',
-    autoDetectHint: 'Periodically checks RDAP/WHOIS or the TLS certificate and updates after renewal',
+    autoDetectHint: 'Periodically checks RDAP / WHOIS and updates after renewal',
     price: 'Renewal price', currency: 'Currency', cycle: 'Renewal cycle', autoRenew: 'Auto-renew is on', group: 'Group',
     offsets: 'Remind before (days)', offsetsHint: 'Select or type, e.g. 30, 7, 3, 1, 0', overdueRemind: 'Remind daily after expiry',
     channels: 'Channels', channelsHint: 'Empty = use the group channels', detect: 'Check now', renew: 'Renewed',
@@ -42,13 +42,13 @@ export default {
     events: 'Changes', noEvents: 'No changes yet', nextDetect: 'Next check', failCount: 'Failures in a row',
   },
   importer: {
-    title: 'Import domains', button: 'Import', export: 'Export CSV',
+    title: 'Import domains', titleSsl: 'Import SSL monitors', button: 'Import', export: 'Export CSV',
     steps: { source: 'Data', mapping: 'Columns', options: 'Options', result: 'Done' },
     upload: 'Click or drop a file here', uploadHint: '.xlsx / .csv / .txt supported. Files are parsed in your browser and never uploaded.',
     xlsUnsupported: 'Legacy .xls is not supported. Save it as .xlsx or .csv in Excel first.', paste: 'Or paste',
     pastePlaceholder: 'One domain per line, rows copied from a spreadsheet, or any text — domains are extracted automatically', parse: 'Parse',
     noDomain: 'No domains found. Please check the content.', detected: '{n} rows detected', preset: 'Detected platform: {name}', columns: 'Column mapping',
-    fields: { domain: 'Domain', expire: 'Expiry', registrar: 'Registrar', notes: 'Notes', price: 'Price' }, notMapped: 'Skip',
+    fields: { domain: 'Domain', host: 'Host', expire: 'Expiry', registrar: 'Registrar', notes: 'Notes', price: 'Price' }, notMapped: 'Skip',
     dateOrder: 'Date format', dateOrders: { auto: 'Auto', mdy: 'M/D/Y', dmy: 'D/M/Y' },
     ambiguous: 'Dates like 03/04/2027 found — please confirm M/D/Y or D/M/Y', preview: 'Preview (first 20 rows)',
     valid: '{n} valid domains', invalid: '{n} invalid rows', noExpire: '{n} without expiry (will be detected)',
@@ -56,10 +56,16 @@ export default {
     sslCustomPlaceholder: 'e.g. api, mail (comma separated)', autoDetect: 'Auto-detect expiry (recommended; imported dates are used as fallback)',
     existing: 'Existing domains', existingSkip: 'Skip', existingUpdate: 'Update expiry and registrar from the file',
     domainOffsets: 'Domain reminders (days)', sslOffsets: 'SSL reminders (days)', start: 'Start import',
-    summary: '{domains} domains and {ssl} SSL monitors added, {updated} updated, {skipped} skipped (already exist)',
+    summary: '{created} added, {updated} updated, {skipped} skipped (already exist)',
+    sslSource: 'What to monitor', sslDirect: 'The hosts in the file (subdomains and ports allowed, e.g. mail.example.com:8443)', sslPrefix: 'For each domain, monitor:',
     detecting: 'Detecting expiry in background: {done} / {total}', detectFailed: '{n} failed — check the reason in the list or fill in manually',
     detectHint: 'Detection runs in the background; you can close this window', undo: 'Undo this import', undone: 'Undone, {n} items removed',
     invalidList: 'Invalid rows', viewList: 'View list', again: 'Import more', history: 'Recent imports', reverted: 'Reverted',
+  },
+  monitor: {
+    title: { domain: 'Domain expiry', ssl: 'SSL certificates' }, add: { domain: 'Add domain', ssl: 'Monitor certificate' },
+    stats: { total: 'Monitored', soon: 'Expiring in {days} days', expired: 'Expired', abnormal: 'Problems' },
+    filters: { all: 'All', soon: '{days} days', expired: 'Expired', abnormal: 'Problems' },
   },
   domain: {
     title: 'Domains & certificates', desc: 'One row per domain with its SSL certificates below. Select rows for bulk actions.',
@@ -130,7 +136,7 @@ export default {
   },
   template: {
     title: 'Templates', desc: 'Customize the messages you receive.',
-    groups: { expire: 'Expiry reminders', event: 'Monitoring events' }, presets: { detailed: 'Detailed', simple: 'Simple', en: 'English' }, usePreset: 'Use preset',
+    groups: { domain: 'Domains', ssl: 'SSL certificates', general: 'General' }, presets: { detailed: 'Detailed', simple: 'Simple', en: 'English' }, usePreset: 'Use preset',
     previewWith: 'Preview with', sample: 'Sample data',
     syntax: 'Syntax: {a} inserts a variable; {b} shows the content only when the variable has a value; {c} only when it is empty; lines whose variables are all empty are hidden. Telegram HTML: <b> <i> <u> <s> <code> <a href="">',
     scenes: { domain_expire: 'Domain expiry', ssl_expire: 'SSL expiry', digest: 'Daily digest', asset_expire: 'Other asset expiry', task_due: 'Recurring check', domain_renewed: 'Domain renewed', ns_changed: 'Nameservers changed', domain_status: 'Domain status alert', ssl_renewed: 'SSL renewed', ssl_error: 'SSL problem', ssl_renew_stuck: 'SSL auto-renewal stuck', detect_failed: 'Checks failing' }, variables: 'Variables (click to insert)', custom: 'Customized',

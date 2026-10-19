@@ -23,7 +23,9 @@ class Asset extends ApiController
 
         $type = $this->request->param('type');
         if ($type) {
-            $query->where('type', $type);
+            $query->whereIn('type', explode(',', $type));
+        } elseif ($this->request->param('exclude_monitors')) {
+            $query->whereNotIn('type', AssetModel::DETECTABLE);
         }
         if ($groupId = (int) $this->request->param('group_id')) {
             $query->where('group_id', $groupId);

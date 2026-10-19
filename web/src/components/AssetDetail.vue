@@ -60,17 +60,6 @@
         <n-descriptions-item v-if="asset.notes" :label="t('common.notes')">{{ asset.notes }}</n-descriptions-item>
       </n-descriptions>
 
-      <template v-if="asset.certs && asset.certs.length">
-        <h4 class="sub">{{ t('domain.certs') }}</h4>
-        <div v-for="c in asset.certs" :key="c.id" class="cert">
-          <span class="mono">{{ c.name }}</span>
-          <DaysTag :days="c.days_left" />
-          <n-tag v-if="c.issue" size="small" type="error" round :bordered="false">{{ t('asset.issues.' + c.issue) }}</n-tag>
-          <n-tag v-if="c.detect_status === 'failed'" size="small" type="error" round :bordered="false">{{ t('domain.checkFailed') }}</n-tag>
-          <span class="muted">{{ c.provider }}</span>
-        </div>
-      </template>
-
       <h4 class="sub">{{ t('asset.events') }}</h4>
       <n-empty v-if="!events.length" size="small" :description="t('asset.noEvents')" />
       <n-timeline v-else>
@@ -141,5 +130,4 @@ function eventText(e) {
 .headline { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; gap: 8px; flex-wrap: wrap; }
 .big { font-size: 22px; font-weight: 600; }
 .sub { margin: 18px 0 8px; font-size: 14px; }
-.cert { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed rgba(127, 127, 127, .2); flex-wrap: wrap; }
 </style>
