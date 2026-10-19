@@ -9,7 +9,7 @@ use app\common\model\Channel;
 interface ChannelDriver
 {
     /**
-     * @param array $actions 可选的交互按钮 [['text' => '', 'data' => ''], ...]
+     * @param array $actions 可选按钮：回调 ['text' => '', 'data' => '']，链接 ['text' => '', 'url' => '']
      * @throws \RuntimeException 发送失败
      */
     public function send(Channel $channel, string $content, array $actions = []): void;

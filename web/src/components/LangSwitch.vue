@@ -24,7 +24,7 @@ async function change(key) {
   setLocale(key)
   if (auth.user) {
     const u = auth.user
-    await api.put('/api/auth/profile', { name: u.name, locale: key, timezone: u.timezone, notify_time: u.notify_time }, { silent: true })
+    await api.put('/api/auth/profile', { name: u.name, locale: key, timezone: u.timezone, notify_time: u.notify_time, notify_mode: u.notify_mode || 'smart' }, { silent: true })
     u.locale = key
   }
 }

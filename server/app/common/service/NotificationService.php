@@ -41,6 +41,26 @@ class NotificationService
         return $notification;
     }
 
+    /**
+     * 只记录不发送（已合并进每日汇总），用于去重与“本周期已提醒”判断
+     */
+    public static function mark(Channel $channel, string $targetType, int $targetId, string $dedupeKey, string $content): void
+    {
+        try {
+            Notification::create([
+                'tenant_id'   => $channel->tenant_id,
+                'user_id'     => $channel->user_id,
+                'channel_id'  => $channel->id,
+                'target_type' => $targetType,
+                'target_id'   => $targetId,
+                'dedupe_key'  => $dedupeKey,
+                'content'     => $content,
+                'status'      => 'merged',
+            ]);
+        } catch (Throwable) {
+        }
+    }
+
     public static function deliver(int $id, array $actions = []): void
     {
         $notification = Notification::find($id);

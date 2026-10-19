@@ -196,7 +196,7 @@ class UpdateHandler
             ->whereNotNull('expire_time')->where('expire_time', '<=', $limit)->order('expire_time')->limit(30)->select();
         foreach (array_filter($assets->all(), $routed) as $a) {
             $d       = TimeHelper::daysBetween($today, TimeHelper::fromDb($a->expire_time)->setTimezone($tz));
-            $lines[] = ($d < 0 ? '🔴' : ($d <= 3 ? '🟠' : '🟡')) . ' ' . htmlspecialchars($a->name) . ' — ' . TemplateService::statusText($d, $locale);
+            $lines[] = TemplateService::level($d)[0] . ' ' . htmlspecialchars($a->name) . ' — ' . TemplateService::statusText($d, $locale);
         }
 
         $tasks = Task::whereIn('tenant_id', $tenantIds)->where('status', 'active')

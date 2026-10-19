@@ -27,12 +27,12 @@ const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 })
 
 const columns = computed(() => [
   { title: t('notification.sentAt'), key: 'create_time', width: 150, render: (r) => fmt(r.create_time) },
-  { title: t('notification.target'), key: 'target_type', width: 100, render: (r) => (r.target_type === 'asset' ? t('nav.assets') : t('nav.tasks')) },
+  { title: t('notification.target'), key: 'target_type', width: 100, render: (r) => ({ asset: t('nav.assets'), task: t('nav.tasks'), digest: t('notification.digest') }[r.target_type] || r.target_type) },
   { title: t('notification.content'), key: 'content', ellipsis: { tooltip: true }, render: (r) => r.content.replace(/<[^>]+>/g, '').replace(/\n+/g, ' · ') },
   {
     title: t('common.status'), key: 'status', width: 100,
     render: (r) => {
-      const tag = h(NTag, { size: 'small', bordered: false, type: { sent: 'success', failed: 'error', pending: 'warning' }[r.status] }, () => t('notification.' + r.status))
+      const tag = h(NTag, { size: 'small', bordered: false, type: { sent: 'success', failed: 'error', pending: 'warning', merged: 'default' }[r.status] }, () => t('notification.' + r.status))
       return r.error ? h(NTooltip, null, { trigger: () => tag, default: () => r.error }) : tag
     },
   },

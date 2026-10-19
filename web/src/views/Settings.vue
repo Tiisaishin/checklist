@@ -20,6 +20,13 @@
             <n-select v-model:value="profile.timezone" :options="tzOptions" filterable />
           </n-form-item>
           <div class="muted" style="margin: -8px 0 12px">{{ t('settings.notifyTimeHint') }}</div>
+          <n-form-item :label="t('settings.notifyMode')">
+            <n-radio-group v-model:value="profile.notify_mode">
+              <n-space vertical :size="4">
+                <n-radio v-for="m in ['smart', 'single', 'digest']" :key="m" :value="m">{{ t('settings.notifyModes.' + m) }}</n-radio>
+              </n-space>
+            </n-radio-group>
+          </n-form-item>
           <n-button type="primary" size="small" @click="saveProfile">{{ t('common.save') }}</n-button>
         </n-form>
       </n-card>
@@ -68,7 +75,7 @@ import { fmtDate, setTimezone } from '../utils/time'
 
 const { t } = useI18n()
 const auth = useAuth()
-const profile = reactive({ name: '', locale: 'zh-cn', timezone: 'UTC', notify_time: '09:00' })
+const profile = reactive({ name: '', locale: 'zh-cn', timezone: 'UTC', notify_time: '09:00', notify_mode: 'smart' })
 const pwd = reactive({ old_password: '', password: '' })
 const tenantName = ref('')
 const isAdmin = computed(() => ['owner', 'admin'].includes(auth.tenant?.role))
@@ -84,7 +91,7 @@ onMounted(async () => {
   await auth.loadMeta()
   await auth.fetchMe()
   const u = auth.user
-  Object.assign(profile, { name: u.name, locale: u.locale, timezone: u.timezone, notify_time: u.notify_time })
+  Object.assign(profile, { name: u.name, locale: u.locale, timezone: u.timezone, notify_time: u.notify_time, notify_mode: u.notify_mode || 'smart' })
   tenantName.value = auth.tenant.name
 })
 

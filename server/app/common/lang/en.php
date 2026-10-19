@@ -69,9 +69,11 @@ return [
     'field_price'            => 'Price',
     'field_code'             => 'Code',
 
-    'status_days_left'       => 'Expires in {:days} days',
-    'status_today'           => 'Due today',
-    'status_overdue'         => 'Overdue by {:days} days',
+    'status_days_left'       => 'expires in {:days} days',
+    'status_days_left_one'   => 'expires tomorrow',
+    'status_today'           => 'expires today',
+    'status_overdue'         => 'expired {:days} days ago',
+    'status_overdue_one'     => 'expired yesterday',
 
     'asset_type_domain'       => 'Domain',
     'asset_type_ssl'          => 'SSL certificate',
@@ -112,8 +114,8 @@ return [
     'tg_nothing'             => '🎉 Nothing due within {:days} days.',
     'tg_test_message'        => '✅ Test message from Checklist. This channel works.',
 
-    'tpl_asset_expire'       => "⏰ <b>{type} expiry reminder</b>\n\n<b>{name}</b>\n{status_text} ({expire_date})\nProvider: {provider}\nRenewal: {price}\n{url}",
-    'tpl_task_due'           => "📋 <b>Check reminder</b>\n\n<b>{title}</b>\n{status_text} · {frequency}\nTime: {due_time}\n{steps}\n{description}",
+    'tpl_asset_expire'       => "{level_icon} <b>{type} {status_text}</b>\n\n<b>{name}</b>\nExpiry: {expire_date} ({weekday})\nProvider: {provider}\nRenewal: {price}\nGroup: {group}\n{url}\n{notes}",
+    'tpl_task_due'           => "{level_icon} <b>Check reminder</b>\n\n<b>{title}</b>\n{status_text} · {frequency}\nTime: {due_time}\n{steps}\n{description}",
 
     'domain_status_clienthold'       => 'Client hold',
     'domain_status_serverhold'       => 'Server hold',
@@ -140,4 +142,27 @@ return [
     'tpl_ssl_error'       => "🚨 <b>SSL problem: {issue_text}</b>\n\n<b>{name}</b>\nExpiry: {expire_date}\n{error}",
     'tpl_ssl_renew_stuck' => "🟠 <b>SSL auto-renewal may have failed</b>\n\n<b>{name}</b>\nThe certificate expires in <b>{days_left}</b> days ({expire_date}) and has not been replaced.\nIssuer: {issuer}\nCheck your certbot / acme.sh / panel renewal job.",
     'tpl_detect_failed'   => "❗ <b>{fail_count} checks failed in a row</b>\n\n<b>{name}</b> ({type})\n{error}",
+
+    'level_critical' => 'Critical',
+    'level_expired'  => 'Expired',
+    'level_today'    => 'Due today',
+    'level_urgent'   => 'Urgent',
+    'level_soon'     => 'Soon',
+    'level_notice'   => 'Notice',
+    'weekday_1' => 'Mon', 'weekday_2' => 'Tue', 'weekday_3' => 'Wed', 'weekday_4' => 'Thu',
+    'weekday_5' => 'Fri', 'weekday_6' => 'Sat', 'weekday_7' => 'Sun',
+    'ssl_renew_tip'  => '⚠️ This short-lived certificate has not been replaced yet; auto-renewal may be failing',
+    'digest_more'    => '… and {:n} more on the website',
+    'btn_renew_url'  => '🔗 Renew',
+    'btn_open_site'  => '🌐 Open site',
+    'btn_open_app'   => '📋 Open dashboard',
+
+    'tpl_domain_expire'        => "{level_icon} <b>Domain {status_text}</b>\n\n<b>{name}</b>\nExpiry: {expire_date} ({weekday})\n{?phase_text}Phase: <b>{phase_text}</b>\n{/phase_text}Registrar: {provider}\nDNS: {nameservers}\nRenewal: {price}\nGroup: {group}\n{notes}",
+    'tpl_domain_expire_simple' => "{level_icon} {name} {status_text} ({expire_date})",
+    'tpl_ssl_expire'           => "{level_icon} <b>SSL certificate {status_text}</b>\n\n<b>{host}</b>{?port}:{port}{/port}\nExpiry: {expire_date} ({weekday})\nIssuer: {issuer}\nCovers: {san}\n{?issue_text}❗ {issue_text}\n{/issue_text}{renew_tip}\nGroup: {group}",
+    'tpl_ssl_expire_simple'    => "{level_icon} SSL {host} {status_text} ({expire_date})",
+    'tpl_asset_expire_simple'  => "{level_icon} {type} {name} {status_text} ({expire_date})",
+    'tpl_task_due_simple'      => "{level_icon} ☑️ {title} · {due_time}",
+    'tpl_digest'               => "📋 <b>Expiry digest · {count} items</b>\n{date}{?overdue_count} · 🔴 {overdue_count} expired{/overdue_count}\n\n{items}",
+    'tpl_digest_simple'        => "📋 {count} items need attention\n{items}",
 ];

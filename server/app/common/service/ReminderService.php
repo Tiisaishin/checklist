@@ -16,6 +16,7 @@ use DateTimeImmutable;
  * 检查项：在检查项自身的时间点之后，按相同规则发送。
  *
  * 接收人：见 ChannelRouter（条目 > 分组 > 默认分组 > 全部渠道），模板、语言、时区取渠道所属用户。
+ * 发送方式：按用户设置逐条发送或合并为每日汇总（见 flush）。
  */
 class ReminderService
 {
@@ -23,13 +24,23 @@ class ReminderService
     private array $users = [];
     /** @var array<int, Channel[]> */
     private array $channelsByTenant = [];
+    /** @var array<int, Channel> */
+    private array $channels = [];
     private ChannelRouter $router;
+
+    private const SMART_THRESHOLD = 3;
+
+    /**
+     * 本轮待发送：channel_id => [entry, ...]
+     * entry = ['kind' => 'asset'|'task', 'item' => Asset|Task, 'key' => 去重键, 'content' => 单条内容, 'actions' => 按钮]
+     */
+    private array $pending = [];
 
     public function run(?DateTimeImmutable $now = null): int
     {
-        $now          = $now ?: new DateTimeImmutable('now', TimeHelper::utc());
-        $sent         = 0;
-        $this->router = new ChannelRouter();
+        $now           = $now ?: new DateTimeImmutable('now', TimeHelper::utc());
+        $this->router  = new ChannelRouter();
+        $this->pending = [];
 
         $this->loadChannels();
         if (!$this->channelsByTenant) {
@@ -42,9 +53,9 @@ class ReminderService
             ->whereIn('tenant_id', $tenantIds)
             ->whereNotNull('expire_time')
             ->where('expire_time', '<=', TimeHelper::toDb($now->modify('+366 days')))
-            ->chunk(200, function ($assets) use ($now, &$sent) {
+            ->chunk(200, function ($assets) use ($now) {
                 foreach ($assets as $asset) {
-                    $sent += $this->remindAsset($asset, $now);
+                    $this->collectAsset($asset, $now);
                 }
             });
 
@@ -52,12 +63,51 @@ class ReminderService
             ->whereIn('tenant_id', $tenantIds)
             ->whereNotNull('next_due_time')
             ->where('next_due_time', '<=', TimeHelper::toDb($now->modify('+366 days')))
-            ->chunk(200, function ($tasks) use ($now, &$sent) {
+            ->chunk(200, function ($tasks) use ($now) {
                 foreach ($tasks as $task) {
-                    $sent += $this->remindTask($task, $now);
+                    $this->collectTask($task, $now);
                 }
             });
 
+        return $this->flush($now);
+    }
+
+    /**
+     * 按用户的提醒方式发送：
+     *  single 逐条；digest 合并为一条；smart（默认）本轮不超过 3 条逐条，否则合并
+     */
+    private function flush(DateTimeImmutable $now): int
+    {
+        $sent = 0;
+        foreach ($this->pending as $channelId => $entries) {
+            $channel = $this->channels[$channelId];
+            $user    = $this->users[$channel->user_id];
+            $mode    = in_array($user->notify_mode, ['single', 'digest', 'smart'], true) ? $user->notify_mode : 'smart';
+
+            if ($mode === 'single' || ($mode === 'smart' && count($entries) <= self::SMART_THRESHOLD)) {
+                foreach ($entries as $e) {
+                    if (NotificationService::dispatch($channel, $e['kind'], (int) $e['item']->id, $e['key'], $e['content'], $e['actions'])) {
+                        $sent++;
+                    }
+                }
+                continue;
+            }
+
+            // 合并：每个条目只记录不发送，另发一条汇总
+            foreach ($entries as $e) {
+                NotificationService::mark($channel, $e['kind'], (int) $e['item']->id, $e['key'], $e['content']);
+            }
+            $content = TemplateService::render(TemplateService::content($user, 'digest'), TemplateService::digestVars($user, $entries, $now));
+            $actions = [];
+            $appUrl  = (string) config('app.app_url');
+            if (preg_match('#^https?://#', $appUrl) && !preg_match('#//(localhost|127\.|0\.0\.0\.0)#', $appUrl)) {
+                $actions[] = ['text' => trans('btn_open_app', [], $user->locale), 'url' => $appUrl . '/assets'];
+            }
+            $key = 'd:' . $channelId . ':' . $now->setTimezone(TimeHelper::tz($user->timezone))->format('YmdHi') . ':' . md5(implode('|', array_column($entries, 'key')));
+            if (NotificationService::dispatch($channel, 'digest', 0, $key, $content, $actions)) {
+                $sent++;
+            }
+        }
         return $sent;
     }
 
@@ -74,6 +124,7 @@ class ReminderService
         foreach ($channels as $channel) {
             if (isset($this->users[$channel->user_id])) {
                 $this->channelsByTenant[$channel->tenant_id][] = $channel;
+                $this->channels[(int) $channel->id]            = $channel;
             }
         }
     }
@@ -90,21 +141,21 @@ class ReminderService
         return $list;
     }
 
-    private function remindAsset(Asset $asset, DateTimeImmutable $now): int
+    private function collectAsset(Asset $asset, DateTimeImmutable $now): void
     {
         $expire = TimeHelper::fromDb($asset->expire_time);
         if (!$expire) {
-            return 0;
+            return;
         }
         if ($asset->ack_expire_time && $asset->ack_expire_time === $asset->expire_time) {
-            return 0; // 本周期已确认处理
+            return; // 本周期已确认处理
         }
         if ($asset->snooze_until && TimeHelper::fromDb($asset->snooze_until) > $now) {
-            return 0;
+            return;
         }
 
         $offsets = $asset->offsets();
-        $sent    = 0;
+        $scene   = TemplateService::sceneForAsset($asset);
         foreach ($this->recipients($asset) as $channel) {
             $user  = $this->users[$channel->user_id];
             $tz    = TimeHelper::tz($user->timezone);
@@ -114,47 +165,46 @@ class ReminderService
                 continue;
             }
 
-            $days   = TimeHelper::daysBetween($local, $expire->setTimezone($tz));
-            $cycle  = 'a:' . $asset->id . ':' . $expire->format('YmdHi') . ':' . $channel->id;
+            $days  = TimeHelper::daysBetween($local, $expire->setTimezone($tz));
+            $cycle = 'a:' . $asset->id . ':' . $expire->format('YmdHi') . ':' . $channel->id;
             if (!$this->shouldRemind($days, $offsets, (bool) $asset->remind_overdue, $cycle)) {
                 continue;
             }
 
-            $content = TemplateService::render(
-                TemplateService::content($user, 'asset_expire'),
-                TemplateService::assetVars($asset, $user, $now)
-            );
-            $actions = [
-                ['text' => trans('btn_renewed', [], $user->locale), 'data' => 'a:ack:' . $asset->id],
-                ['text' => trans('btn_tomorrow', [], $user->locale), 'data' => 'a:snz:' . $asset->id . ':1d'],
-            ];
+            $content = TemplateService::render(TemplateService::content($user, $scene), TemplateService::assetVars($asset, $user, $now));
+            $actions = [];
+            if ($asset->url && preg_match('#^https?://#i', $asset->url)) {
+                $actions[] = ['text' => trans('btn_renew_url', [], $user->locale), 'url' => $asset->url];
+            } elseif ($asset->type === 'ssl') {
+                $actions[] = ['text' => trans('btn_open_site', [], $user->locale), 'url' => 'https://' . $asset->identifier];
+            }
+            $actions[] = ['text' => trans('btn_renewed', [], $user->locale), 'data' => 'a:ack:' . $asset->id];
+            $actions[] = ['text' => trans('btn_tomorrow', [], $user->locale), 'data' => 'a:snz:' . $asset->id . ':1d'];
             if ($asset->auto_detect && in_array($asset->type, Asset::DETECTABLE, true)) {
                 $actions[] = ['text' => trans('btn_detect', [], $user->locale), 'data' => 'a:det:' . $asset->id];
             }
 
-            if (NotificationService::dispatch($channel, 'asset', $asset->id, $cycle . ':' . $local->format('Ymd'), $content, $actions)) {
-                $sent++;
-            }
+            $this->pending[(int) $channel->id][] = [
+                'kind' => 'asset', 'item' => $asset, 'key' => $cycle . ':' . $local->format('Ymd'), 'content' => $content, 'actions' => $actions,
+            ];
         }
-        return $sent;
     }
 
-    private function remindTask(Task $task, DateTimeImmutable $now): int
+    private function collectTask(Task $task, DateTimeImmutable $now): void
     {
         $due = TimeHelper::fromDb($task->next_due_time);
         if (!$due) {
-            return 0;
+            return;
         }
         if ($task->snooze_until && TimeHelper::fromDb($task->snooze_until) > $now) {
-            return 0;
+            return;
         }
 
         $offsets = $task->offsets() ?: [0];
-        $sent    = 0;
         foreach ($this->recipients($task) as $channel) {
-            $user  = $this->users[$channel->user_id];
-            $tz    = TimeHelper::tz($user->timezone);
-            $local = $now->setTimezone($tz);
+            $user     = $this->users[$channel->user_id];
+            $tz       = TimeHelper::tz($user->timezone);
+            $local    = $now->setTimezone($tz);
             $dueLocal = $due->setTimezone($tz);
 
             // 每天都在检查项设定的时间点之后才提醒
@@ -168,21 +218,17 @@ class ReminderService
                 continue;
             }
 
-            $content = TemplateService::render(
-                TemplateService::content($user, 'task_due'),
-                TemplateService::taskVars($task, $user, $now)
-            );
+            $content = TemplateService::render(TemplateService::content($user, 'task_due'), TemplateService::taskVars($task, $user, $now));
             $actions = [
                 ['text' => trans('btn_done', [], $user->locale), 'data' => 't:done:' . $task->id],
                 ['text' => trans('btn_1h', [], $user->locale), 'data' => 't:snz:' . $task->id . ':1h'],
                 ['text' => trans('btn_tomorrow', [], $user->locale), 'data' => 't:snz:' . $task->id . ':1d'],
             ];
 
-            if (NotificationService::dispatch($channel, 'task', $task->id, $cycle . ':' . $local->format('Ymd'), $content, $actions)) {
-                $sent++;
-            }
+            $this->pending[(int) $channel->id][] = [
+                'kind' => 'task', 'item' => $task, 'key' => $cycle . ':' . $local->format('Ymd'), 'content' => $content, 'actions' => $actions,
+            ];
         }
-        return $sent;
     }
 
     /**

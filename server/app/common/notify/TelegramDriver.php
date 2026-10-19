@@ -13,12 +13,17 @@ class TelegramDriver implements ChannelDriver
             throw new RuntimeException('Chat is not bound');
         }
 
-        $extra = [];
-        if ($actions) {
-            $extra['reply_markup'] = [
-                'inline_keyboard' => [array_map(fn ($a) => ['text' => $a['text'], 'callback_data' => $a['data']], $actions)],
-            ];
+        // 链接按钮一行，回调按钮一行
+        $rows = [];
+        $urls = array_values(array_filter($actions, fn ($a) => !empty($a['url'])));
+        $cbs  = array_values(array_filter($actions, fn ($a) => !empty($a['data'])));
+        if ($urls) {
+            $rows[] = array_map(fn ($a) => ['text' => $a['text'], 'url' => $a['url']], $urls);
         }
+        if ($cbs) {
+            $rows[] = array_map(fn ($a) => ['text' => $a['text'], 'callback_data' => $a['data']], $cbs);
+        }
+        $extra = $rows ? ['reply_markup' => ['inline_keyboard' => $rows]] : [];
 
         BotRegistry::forChannel($channel)->sendMessage($channel->target, $content, $extra);
     }

@@ -76,8 +76,10 @@ return [
 
     // 状态文案
     'status_days_left'       => '还有 {:days} 天到期',
+    'status_days_left_one'   => '明天到期',
     'status_today'           => '今天到期',
     'status_overdue'         => '已过期 {:days} 天',
+    'status_overdue_one'     => '昨天已过期',
 
     'asset_type_domain'       => '域名',
     'asset_type_ssl'          => 'SSL 证书',
@@ -121,8 +123,8 @@ return [
     'tg_test_message'        => '✅ 这是一条来自 Checklist 的测试消息，渠道已可用。',
 
     // 默认通知模板（变量用 {name} 形式）
-    'tpl_asset_expire'       => "⏰ <b>{type}到期提醒</b>\n\n<b>{name}</b>\n{status_text}（{expire_date}）\n服务商：{provider}\n续费：{price}\n{url}",
-    'tpl_task_due'           => "📋 <b>检查提醒</b>\n\n<b>{title}</b>\n{status_text} · {frequency}\n时间：{due_time}\n{steps}\n{description}",
+    'tpl_asset_expire'       => "{level_icon} <b>{type}{status_text}</b>\n\n<b>{name}</b>\n到期时间：{expire_date}（{weekday}）\n服务商：{provider}\n续费价格：{price}\n分组：{group}\n{url}\n{notes}",
+    'tpl_task_due'           => "{level_icon} <b>检查提醒</b>\n\n<b>{title}</b>\n{status_text} · {frequency}\n时间：{due_time}\n{steps}\n{description}",
 
     // 域名状态与阶段
     'domain_status_clienthold'       => '注册商暂停解析',
@@ -151,4 +153,29 @@ return [
     'tpl_ssl_error'       => "🚨 <b>SSL 证书异常：{issue_text}</b>\n\n<b>{name}</b>\n到期时间：{expire_date}\n{error}",
     'tpl_ssl_renew_stuck' => "🟠 <b>SSL 自动续期可能失败</b>\n\n<b>{name}</b>\n证书将在 <b>{days_left}</b> 天后（{expire_date}）过期，但仍未更换。\n签发：{issuer}\n请检查 certbot / acme.sh / 面板的自动续期任务。",
     'tpl_detect_failed'   => "❗ <b>连续 {fail_count} 次检测失败</b>\n\n<b>{name}</b>（{type}）\n{error}",
+
+    // 紧急程度、星期
+    'level_critical' => '严重',
+    'level_expired'  => '已过期',
+    'level_today'    => '今天到期',
+    'level_urgent'   => '紧急',
+    'level_soon'     => '即将到期',
+    'level_notice'   => '提醒',
+    'weekday_1' => '周一', 'weekday_2' => '周二', 'weekday_3' => '周三', 'weekday_4' => '周四',
+    'weekday_5' => '周五', 'weekday_6' => '周六', 'weekday_7' => '周日',
+    'ssl_renew_tip'  => '⚠️ 短期证书仍未自动更换，自动续期可能失败',
+    'digest_more'    => '…… 还有 {:n} 项，请到网页查看',
+    'btn_renew_url'  => '🔗 去续费',
+    'btn_open_site'  => '🌐 打开网站',
+    'btn_open_app'   => '📋 打开控制台',
+
+    // 到期提醒默认模板（详细 / 简洁）
+    'tpl_domain_expire'        => "{level_icon} <b>域名{status_text}</b>\n\n<b>{name}</b>\n到期时间：{expire_date}（{weekday}）\n{?phase_text}当前阶段：<b>{phase_text}</b>\n{/phase_text}注册商：{provider}\nDNS：{nameservers}\n续费价格：{price}\n分组：{group}\n{notes}",
+    'tpl_domain_expire_simple' => "{level_icon} {name} {status_text}（{expire_date}）",
+    'tpl_ssl_expire'           => "{level_icon} <b>SSL 证书{status_text}</b>\n\n<b>{host}</b>{?port}:{port}{/port}\n到期时间：{expire_date}（{weekday}）\n签发：{issuer}\n覆盖域名：{san}\n{?issue_text}❗ {issue_text}\n{/issue_text}{renew_tip}\n分组：{group}",
+    'tpl_ssl_expire_simple'    => "{level_icon} SSL {host} {status_text}（{expire_date}）",
+    'tpl_asset_expire_simple'  => "{level_icon} {type} {name} {status_text}（{expire_date}）",
+    'tpl_task_due_simple'      => "{level_icon} ☑️ {title} · {due_time}",
+    'tpl_digest'               => "📋 <b>到期提醒汇总 · {count} 项</b>\n{date}{?overdue_count} · 🔴 已过期 {overdue_count} 项{/overdue_count}\n\n{items}",
+    'tpl_digest_simple'        => "📋 {count} 项需要关注\n{items}",
 ];

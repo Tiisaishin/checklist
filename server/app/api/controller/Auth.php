@@ -80,6 +80,7 @@ class Auth extends ApiController
             'locale'      => 'require|in:' . implode(',', config('app.locales')),
             'timezone'    => 'require|max:64',
             'notify_time' => ['require', 'regex' => '/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'notify_mode' => 'in:single,digest,smart',
         ]);
         if (!TimeHelper::isValidTimezone($data['timezone'])) {
             throw new ApiException(lang('field_timezone') . ' ✗', 422);

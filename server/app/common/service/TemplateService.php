@@ -1,6 +1,7 @@
 <?php
 namespace app\common\service;
 
+use app\common\detector\DomainDetector;
 use app\common\model\Asset;
 use app\common\model\Group;
 use app\common\model\Task;
@@ -9,14 +10,32 @@ use app\common\model\User;
 use DateTimeImmutable;
 
 /**
- * 通知模板：用户自定义 > 语言默认模板。变量写法 {name}
+ * 通知模板：用户自定义 > 语言默认模板。
+ *
+ * 语法：
+ *  {name}                 变量（值会做 HTML 转义）
+ *  {?var}……{/var}         var 非空时才显示中间内容
+ *  {!var}……{/var}         var 为空时才显示中间内容
+ *  一行里的变量全部为空时，整行自动省略
+ * 模板本身可以使用 Telegram 支持的 HTML：<b> <i> <u> <s> <code> <pre> <a href="">
  */
 class TemplateService
 {
+    /** 场景分组（用于界面展示） */
+    public const GROUPS = [
+        'expire' => ['domain_expire', 'ssl_expire', 'asset_expire', 'task_due', 'digest'],
+        'event'  => ['domain_renewed', 'ns_changed', 'domain_status', 'ssl_renewed', 'ssl_error', 'ssl_renew_stuck', 'detect_failed'],
+    ];
+
+    /** 有「简洁」预设的场景 */
+    private const SIMPLE_PRESETS = ['domain_expire', 'ssl_expire', 'asset_expire', 'task_due', 'digest'];
+
     public const VARIABLES = [
-        'asset_expire' => ['name', 'type', 'identifier', 'provider', 'expire_date', 'days_left', 'status_text', 'price', 'currency', 'url', 'notes', 'group'],
-        'task_due'     => ['title', 'description', 'due_time', 'days_left', 'status_text', 'frequency', 'group', 'steps'],
-        // 监控变化事件
+        'domain_expire'   => ['name', 'expire_date', 'weekday', 'days_left', 'status_text', 'level_icon', 'level_text', 'phase_text', 'provider', 'nameservers', 'price', 'url', 'group', 'notes'],
+        'ssl_expire'      => ['name', 'host', 'port', 'expire_date', 'weekday', 'days_left', 'status_text', 'level_icon', 'level_text', 'issuer', 'san', 'issue_text', 'renew_tip', 'group', 'notes'],
+        'asset_expire'    => ['name', 'type', 'identifier', 'provider', 'expire_date', 'weekday', 'days_left', 'status_text', 'level_icon', 'level_text', 'price', 'url', 'notes', 'group'],
+        'task_due'        => ['title', 'description', 'due_time', 'weekday', 'days_left', 'status_text', 'level_icon', 'frequency', 'group', 'steps'],
+        'digest'          => ['count', 'overdue_count', 'date', 'items'],
         'domain_renewed'  => ['name', 'old_expire', 'new_expire', 'provider', 'group'],
         'ns_changed'      => ['name', 'old_ns', 'new_ns', 'group'],
         'domain_status'   => ['name', 'statuses', 'phase_text', 'expire_date', 'group'],
@@ -26,27 +45,65 @@ class TemplateService
         'detect_failed'   => ['name', 'type', 'error', 'fail_count', 'group'],
     ];
 
+    public static function scenes(): array
+    {
+        return array_merge(...array_values(self::GROUPS));
+    }
+
+    public static function sceneForAsset(Asset $asset): string
+    {
+        return match ($asset->type) {
+            'domain' => 'domain_expire',
+            'ssl'    => 'ssl_expire',
+            default  => 'asset_expire',
+        };
+    }
+
     public static function defaultContent(string $scene, string $locale): string
     {
         return trans('tpl_' . $scene, [], $locale);
     }
 
-    public static function content(User $user, string $scene): string
+    /** 预设：详细（默认）/ 简洁 / 英文 */
+    public static function presets(string $scene, string $locale): array
     {
-        $custom = Template::where('user_id', $user->id)->where('scene', $scene)->value('content');
-        return $custom ?: self::defaultContent($scene, $user->locale);
+        $list = ['detailed' => self::defaultContent($scene, $locale)];
+        if (in_array($scene, self::SIMPLE_PRESETS, true)) {
+            $list['simple'] = trans('tpl_' . $scene . '_simple', [], $locale);
+        }
+        if ($locale !== 'en') {
+            $list['en'] = self::defaultContent($scene, 'en');
+        }
+        return $list;
     }
 
-    /** 渲染：变量值做 HTML 转义，模板本身允许 Telegram 支持的 HTML 标签 */
+    public static function content(User $user, string $scene): string
+    {
+        static $cache = [];
+        $key = $user->id . ':' . $scene;
+        if (!array_key_exists($key, $cache)) {
+            $cache[$key] = Template::where('user_id', $user->id)->where('scene', $scene)->value('content');
+        }
+        return $cache[$key] ?: self::defaultContent($scene, $user->locale);
+    }
+
     public static function render(string $template, array $vars): string
     {
+        $template = str_replace("\r\n", "\n", $template);
+
+        // 条件块
+        $template = preg_replace_callback('/\{([?!])(\w+)\}(.*?)\{\/\2\}/s', function ($m) use ($vars) {
+            $filled = isset($vars[$m[2]]) && (string) $vars[$m[2]] !== '';
+            return ($m[1] === '?') === $filled ? $m[3] : '';
+        }, $template);
+
         $replace = [];
         foreach ($vars as $k => $v) {
             $replace['{' . $k . '}'] = htmlspecialchars((string) $v, ENT_NOQUOTES);
         }
 
         $lines = [];
-        foreach (explode("\n", str_replace("\r\n", "\n", $template)) as $line) {
+        foreach (explode("\n", $template) as $line) {
             // 一行中的变量全部为空时（如未填写服务商），整行省略
             if (preg_match_all('/\{(\w+)\}/', $line, $m) && $m[1]) {
                 $filled = array_filter($m[1], fn ($k) => isset($vars[$k]) && (string) $vars[$k] !== '');
@@ -63,33 +120,72 @@ class TemplateService
     public static function statusText(int $daysLeft, string $locale): string
     {
         return match (true) {
-            $daysLeft > 0  => trans('status_days_left', ['days' => $daysLeft], $locale),
-            $daysLeft == 0 => trans('status_today', [], $locale),
-            default        => trans('status_overdue', ['days' => -$daysLeft], $locale),
+            $daysLeft === 1  => trans('status_days_left_one', [], $locale),
+            $daysLeft > 0    => trans('status_days_left', ['days' => $daysLeft], $locale),
+            $daysLeft === 0  => trans('status_today', [], $locale),
+            $daysLeft === -1 => trans('status_overdue_one', [], $locale),
+            default          => trans('status_overdue', ['days' => -$daysLeft], $locale),
+        };
+    }
+
+    /**
+     * 紧急程度：[图标, 级别]
+     * 赎回期/待删除 ⚫ critical；已过期 🔴 expired；今天 🔴 today；1–3 天 🟠 urgent；4–14 天 🟡 soon；更早 🟢 notice
+     */
+    public static function level(int $days, string $phase = 'active'): array
+    {
+        return match (true) {
+            in_array($phase, ['redemption', 'pending_delete'], true) => ['⚫', 'critical'],
+            $days < 0   => ['🔴', 'expired'],
+            $days === 0 => ['🔴', 'today'],
+            $days <= 3  => ['🟠', 'urgent'],
+            $days <= 14 => ['🟡', 'soon'],
+            default     => ['🟢', 'notice'],
         };
     }
 
     public static function assetVars(Asset $asset, User $user, DateTimeImmutable $now): array
     {
-        $tz      = TimeHelper::tz($user->timezone);
-        $expire  = TimeHelper::fromDb($asset->expire_time)?->setTimezone($tz);
-        $days    = $expire ? TimeHelper::daysBetween($now->setTimezone($tz), $expire) : 0;
-        $locale  = $user->locale;
+        $tz     = TimeHelper::tz($user->timezone);
+        $locale = $user->locale;
+        $expire = TimeHelper::fromDb($asset->expire_time)?->setTimezone($tz);
+        $days   = $expire ? TimeHelper::daysBetween($now->setTimezone($tz), $expire) : 0;
+        $meta   = (array) $asset->detect_meta;
+        $phase  = $asset->type === 'domain' ? DomainDetector::phase($days, (array) ($meta['status'] ?? [])) : 'active';
+        [$icon, $level] = self::level($days, $phase);
 
-        return [
+        $vars = [
             'name'        => $asset->name,
             'type'        => trans('asset_type_' . $asset->type, [], $locale),
             'identifier'  => $asset->identifier,
             'provider'    => $asset->provider,
             'expire_date' => $expire ? $expire->format('Y-m-d') : '-',
+            'weekday'     => $expire ? trans('weekday_' . $expire->format('N'), [], $locale) : '',
             'days_left'   => $days,
             'status_text' => self::statusText($days, $locale),
+            'level_icon'  => $icon,
+            'level_text'  => trans('level_' . $level, [], $locale),
             'price'       => $asset->price > 0 ? rtrim(rtrim(number_format((float) $asset->price, 2, '.', ''), '0'), '.') . ' ' . $asset->currency : '',
             'currency'    => $asset->currency,
             'url'         => $asset->url,
             'notes'       => (string) $asset->notes,
-            'group'       => $asset->group_id ? (string) Group::where('id', $asset->group_id)->value('name') : '',
+            'group'       => self::groupName((int) $asset->group_id),
         ];
+
+        if ($asset->type === 'domain') {
+            $vars['phase_text']  = $phase !== 'active' ? trans('phase_' . $phase, [], $locale) : '';
+            $vars['nameservers'] = implode(', ', array_slice((array) ($meta['nameservers'] ?? []), 0, 4));
+        }
+        if ($asset->type === 'ssl') {
+            $vars['host']       = (string) ($meta['host'] ?? $asset->identifier);
+            $vars['port']       = (string) ($meta['port'] ?? 443);
+            $vars['issuer']     = trim(($asset->provider ?: '') . (!empty($meta['issuer_cn']) ? ' (' . $meta['issuer_cn'] . ')' : ''));
+            $san                = (array) ($meta['san'] ?? []);
+            $vars['san']        = implode(', ', array_slice($san, 0, 5)) . (count($san) > 5 ? ' …+' . (count($san) - 5) : '');
+            $vars['issue_text'] = !empty($meta['issue']) ? trans('issue_' . $meta['issue'], [], $locale) : '';
+            $vars['renew_tip']  = !empty($meta['short_lived']) && $days >= 0 && $days < 20 ? trans('ssl_renew_tip', [], $locale) : '';
+        }
+        return $vars;
     }
 
     public static function taskVars(Task $task, User $user, DateTimeImmutable $now): array
@@ -104,10 +200,12 @@ class TemplateService
             'title'       => $task->title,
             'description' => (string) $task->description,
             'due_time'    => $due ? $due->format('Y-m-d H:i') : '-',
+            'weekday'     => $due ? trans('weekday_' . $due->format('N'), [], $locale) : '',
             'days_left'   => $days,
             'status_text' => self::statusText($days, $locale),
+            'level_icon'  => self::level($days)[0],
             'frequency'   => self::frequencyText($task, $locale),
-            'group'       => $task->group_id ? (string) Group::where('id', $task->group_id)->value('name') : '',
+            'group'       => self::groupName((int) $task->group_id),
             'steps'       => implode("\n", $steps),
         ];
     }
@@ -125,7 +223,7 @@ class TemplateService
             'name'        => $asset->name,
             'type'        => trans('asset_type_' . $asset->type, [], $locale),
             'provider'    => $asset->provider,
-            'group'       => $asset->group_id ? (string) Group::where('id', $asset->group_id)->value('name') : '',
+            'group'       => self::groupName((int) $asset->group_id),
             'expire_date' => $date($asset->expire_time),
             'days_left'   => $days,
             'old_expire'  => $date($data['old_expire'] ?? null),
@@ -141,26 +239,87 @@ class TemplateService
         ];
     }
 
+    /**
+     * 每日汇总
+     * @param array $entries [['kind' => 'asset'|'task', 'item' => Asset|Task], ...]
+     */
+    public static function digestVars(User $user, array $entries, DateTimeImmutable $now): array
+    {
+        $locale = $user->locale;
+        $rows   = [];
+        foreach ($entries as $e) {
+            if ($e['kind'] === 'asset') {
+                $v      = self::assetVars($e['item'], $user, $now);
+                $rows[] = [$v['days_left'], "{$v['level_icon']} {$v['name']} — {$v['status_text']}（{$v['expire_date']}）"];
+            } else {
+                $v      = self::taskVars($e['item'], $user, $now);
+                $rows[] = [$v['days_left'], "{$v['level_icon']} ☑️ {$v['title']} — {$v['due_time']}"];
+            }
+        }
+        usort($rows, fn ($a, $b) => $a[0] <=> $b[0]);
+
+        $max   = 20;
+        $lines = array_map(fn ($r) => $r[1], array_slice($rows, 0, $max));
+        if (count($rows) > $max) {
+            $lines[] = trans('digest_more', ['n' => count($rows) - $max], $locale);
+        }
+        $local = $now->setTimezone(TimeHelper::tz($user->timezone));
+
+        return [
+            'count'         => count($rows),
+            'overdue_count' => count(array_filter($rows, fn ($r) => $r[0] < 0)) ?: '',
+            'date'          => $local->format('Y-m-d') . ' ' . trans('weekday_' . $local->format('N'), [], $locale),
+            'items'         => implode("\n", $lines),
+        ];
+    }
+
     public static function frequencyText(Task $task, string $locale): string
     {
         $n = max(1, (int) $task->interval);
         return trans('freq_' . $task->freq . ($n > 1 ? '_n' : ''), ['n' => $n], $locale);
     }
 
-    /** 预览示例数据 */
-    public static function sampleVars(string $scene, string $locale): array
+    private static function groupName(int $groupId): string
     {
-        return $scene === 'asset_expire'
-            ? [
-                'name' => 'example.com', 'type' => trans('asset_type_domain', [], $locale), 'identifier' => 'example.com',
-                'provider' => 'Cloudflare', 'expire_date' => date('Y-m-d', strtotime('+7 days')), 'days_left' => 7,
-                'status_text' => self::statusText(7, $locale), 'price' => '10.44 USD', 'currency' => 'USD',
-                'url' => 'https://dash.cloudflare.com', 'notes' => '', 'group' => 'Blog',
-            ]
-            : [
-                'title' => trans('sample_task_title', [], $locale), 'description' => '', 'due_time' => date('Y-m-d') . ' 09:00',
-                'days_left' => 0, 'status_text' => self::statusText(0, $locale), 'frequency' => trans('freq_weekly', [], $locale),
-                'group' => 'Blog', 'steps' => "▫️ df -h\n▫️ backup log",
-            ];
+        static $cache = [];
+        if (!$groupId) {
+            return '';
+        }
+        return $cache[$groupId] ??= (string) Group::where('id', $groupId)->value('name');
+    }
+
+    /** 预览示例数据（与真实渲染走同一套变量逻辑） */
+    public static function sampleVars(string $scene, User $user): array
+    {
+        $now = new DateTimeImmutable('now', TimeHelper::utc());
+
+        $domain = new Asset([
+            'type' => 'domain', 'name' => 'example.com', 'identifier' => 'example.com', 'provider' => 'Namecheap',
+            'expire_time' => TimeHelper::toDb($now->modify('+7 days')), 'price' => 10.44, 'currency' => 'USD',
+            'url' => 'https://ap.www.namecheap.com/domains/list', 'notes' => '', 'group_id' => 0,
+            'detect_meta' => ['nameservers' => ['ns1.cloudflare.com', 'ns2.cloudflare.com'], 'status' => []],
+        ]);
+        $ssl = new Asset([
+            'type' => 'ssl', 'name' => 'www.example.com', 'identifier' => 'www.example.com', 'provider' => "Let's Encrypt",
+            'expire_time' => TimeHelper::toDb($now->modify('+3 days')), 'group_id' => 0, 'notes' => '',
+            'detect_meta' => ['host' => 'www.example.com', 'port' => 443, 'issuer_cn' => 'R11', 'san' => ['example.com', 'www.example.com'], 'short_lived' => true, 'issue' => ''],
+        ]);
+        $task = new Task([
+            'title' => trans('sample_task_title', [], $user->locale), 'description' => '', 'freq' => 'weekly', 'interval' => 1,
+            'next_due_time' => TimeHelper::toDb($now), 'group_id' => 0, 'steps' => ['df -h', 'backup log'],
+        ]);
+
+        return match ($scene) {
+            'domain_expire' => self::assetVars($domain, $user, $now),
+            'ssl_expire'    => self::assetVars($ssl, $user, $now),
+            'asset_expire'  => self::assetVars($domain, $user, $now),
+            'task_due'      => self::taskVars($task, $user, $now),
+            'digest'        => self::digestVars($user, [['kind' => 'asset', 'item' => $domain], ['kind' => 'asset', 'item' => $ssl], ['kind' => 'task', 'item' => $task]], $now),
+            default         => self::eventVars(str_starts_with($scene, 'ssl') ? $ssl : $domain, $user, $scene, [
+                'old_expire' => TimeHelper::toDb($now->modify('-358 days')), 'new_expire' => TimeHelper::toDb($now->modify('+372 days')),
+                'old' => ['dns1.registrar-servers.com'], 'new' => ['ns1.cloudflare.com'], 'statuses' => ['redemptionperiod'],
+                'phase' => 'redemption', 'issue' => 'mismatch', 'error' => 'peer certificate CN did not match', 'fail_count' => 3, 'issuer' => 'R11',
+            ]),
+        };
     }
 }
