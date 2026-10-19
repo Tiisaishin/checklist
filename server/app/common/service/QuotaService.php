@@ -28,7 +28,9 @@ class QuotaService
     public static function usage(Tenant $tenant): array
     {
         return [
-            'assets'   => Asset::where('tenant_id', $tenant->id)->count(),
+            'domains'  => Asset::where('tenant_id', $tenant->id)->where('type', 'domain')->count(),
+            'ssl'      => Asset::where('tenant_id', $tenant->id)->where('type', 'ssl')->count(),
+            'assets'   => Asset::where('tenant_id', $tenant->id)->whereNotIn('type', ['domain', 'ssl'])->count(),
             'tasks'    => Task::where('tenant_id', $tenant->id)->count(),
             'channels' => Channel::where('tenant_id', $tenant->id)->count(),
             'members'  => TenantUser::where('tenant_id', $tenant->id)->count(),
@@ -36,18 +38,35 @@ class QuotaService
         ];
     }
 
-    /**
-     * @param string $resource assets / tasks / channels / members / vault
-     */
-    public static function ensure(Tenant $tenant, string $resource): void
+    /** 资产类型对应的配额：域名、SSL 证书、其他资产分开计算 */
+    public static function resourceForType(string $type): string
     {
-        $plan  = self::plan($tenant);
-        $limit = (int) ($plan?->{'max_' . $resource} ?? 0);
+        return match ($type) {
+            'domain' => 'domains',
+            'ssl'    => 'ssl',
+            default  => 'assets',
+        };
+    }
+
+    /** 剩余可用数量，-1 表示不限 */
+    public static function remaining(Tenant $tenant, string $resource): int
+    {
+        $limit = (int) (self::plan($tenant)?->{'max_' . $resource} ?? 0);
         if ($limit < 0) {
-            return;
+            return -1;
         }
-        $used = self::usage($tenant)[$resource] ?? 0;
-        if ($used >= $limit) {
+        return max(0, $limit - (self::usage($tenant)[$resource] ?? 0));
+    }
+
+    /**
+     * @param string $resource domains / ssl / assets / tasks / channels / members / vault
+     * @param int    $count    本次要新增的数量
+     */
+    public static function ensure(Tenant $tenant, string $resource, int $count = 1): void
+    {
+        $left = self::remaining($tenant, $resource);
+        if ($left >= 0 && $count > $left) {
+            $limit = (int) self::plan($tenant)?->{'max_' . $resource};
             throw new ApiException(lang('quota_exceeded', ['resource' => lang('resource_' . $resource), 'limit' => $limit]), 403);
         }
     }

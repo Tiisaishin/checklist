@@ -13,9 +13,9 @@ class Installer
 
         if (!Plan::count()) {
             $plans = [
-                ['code' => 'free', 'name' => 'Free', 'max_assets' => 20, 'max_tasks' => 20, 'max_channels' => 2, 'max_members' => 1, 'max_vault' => 50, 'detect_interval' => 1440, 'price_month' => 0, 'price_year' => 0, 'is_default' => 1, 'sort' => 1],
-                ['code' => 'pro', 'name' => 'Pro', 'max_assets' => 500, 'max_tasks' => 500, 'max_channels' => 10, 'max_members' => 5, 'max_vault' => 1000, 'detect_interval' => 360, 'price_month' => 5, 'price_year' => 50, 'is_default' => 0, 'sort' => 2],
-                ['code' => 'team', 'name' => 'Team', 'max_assets' => -1, 'max_tasks' => -1, 'max_channels' => -1, 'max_members' => 50, 'max_vault' => -1, 'detect_interval' => 60, 'price_month' => 19, 'price_year' => 190, 'is_default' => 0, 'sort' => 3],
+                ['code' => 'free', 'name' => 'Free', 'max_assets' => 20, 'max_domains' => 20, 'max_ssl' => 20, 'max_tasks' => 20, 'max_channels' => 2, 'max_members' => 1, 'max_vault' => 50, 'detect_interval' => 1440, 'price_month' => 0, 'price_year' => 0, 'is_default' => 1, 'sort' => 1],
+                ['code' => 'pro', 'name' => 'Pro', 'max_assets' => 500, 'max_domains' => 500, 'max_ssl' => 500, 'max_tasks' => 500, 'max_channels' => 10, 'max_members' => 5, 'max_vault' => 1000, 'detect_interval' => 360, 'price_month' => 5, 'price_year' => 50, 'is_default' => 0, 'sort' => 2],
+                ['code' => 'team', 'name' => 'Team', 'max_assets' => -1, 'max_domains' => -1, 'max_ssl' => -1, 'max_tasks' => -1, 'max_channels' => -1, 'max_members' => 50, 'max_vault' => -1, 'detect_interval' => 60, 'price_month' => 19, 'price_year' => 190, 'is_default' => 0, 'sort' => 3],
             ];
             foreach ($plans as $plan) {
                 Plan::create($plan + ['currency' => 'USD', 'status' => 1]);

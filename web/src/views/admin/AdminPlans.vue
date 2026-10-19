@@ -4,7 +4,7 @@
       <h2>{{ t('nav.adminPlans') }}</h2>
       <n-button type="primary" @click="edit()">{{ t('common.create') }}</n-button>
     </div>
-    <n-data-table :columns="columns" :data="rows" :loading="loading" size="small" :scroll-x="900" />
+    <n-data-table :columns="columns" :data="rows" :loading="loading" size="small" :scroll-x="1150" />
 
     <n-modal v-model:show="visible" preset="card" :title="form.id ? t('common.edit') : t('common.create')" style="max-width: 560px">
       <n-form :model="form" label-placement="top" size="small">
@@ -46,8 +46,8 @@ const { t } = useI18n()
 const rows = ref([])
 const loading = ref(false)
 const visible = ref(false)
-const limits = [['max_assets', 'maxAssets'], ['max_tasks', 'maxTasks'], ['max_channels', 'maxChannels'], ['max_members', 'maxMembers'], ['max_vault', 'maxVault']]
-const empty = () => ({ id: null, code: '', name: '', max_assets: 20, max_tasks: 20, max_channels: 2, max_members: 1, max_vault: 50, detect_interval: 1440, price_month: 0, price_year: 0, currency: 'USD', is_default: false, status: true, sort: 0 })
+const limits = [['max_domains', 'maxDomains'], ['max_ssl', 'maxSsl'], ['max_assets', 'maxAssets'], ['max_tasks', 'maxTasks'], ['max_channels', 'maxChannels'], ['max_members', 'maxMembers'], ['max_vault', 'maxVault']]
+const empty = () => ({ id: null, code: '', name: '', max_domains: 20, max_ssl: 20, max_assets: 20, max_tasks: 20, max_channels: 2, max_members: 1, max_vault: 50, detect_interval: 1440, price_month: 0, price_year: 0, currency: 'USD', is_default: false, status: true, sort: 0 })
 const form = reactive(empty())
 const lim = (v) => (v < 0 ? '∞' : v)
 

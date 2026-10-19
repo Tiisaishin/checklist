@@ -150,12 +150,12 @@ export default {
   settings: {
     profile: 'Profile', locale: 'Language', timezone: 'Time zone', notifyTime: 'Daily reminder time', notifyTimeHint: 'Asset reminders are sent after this time each day', notifyMode: 'Delivery', notifyModes: { smart: 'Smart (up to 3 one by one, otherwise one digest)', single: 'One message per item', digest: 'Always one digest' },
     password: 'Change password', oldPassword: 'Current password', newPassword: 'New password', workspace: 'Workspace', workspaceName: 'Workspace name',
-    plan: 'Plan', usage: 'Usage', expireAt: 'Expires', assets: 'Assets', tasks: 'Checks', channels: 'Channels', members: 'Members', vault: 'Vault',
+    plan: 'Plan', usage: 'Usage', expireAt: 'Expires', domains: 'Domains', ssl: 'SSL', assets: 'Other assets', tasks: 'Checks', channels: 'Channels', members: 'Members', vault: 'Vault',
   },
   admin: {
     users: 'Users', tenants: 'Workspaces', assets: 'Assets', tasks: 'Checks', channels: 'Active channels', sent24h: 'Sent (24h)', failed24h: 'Failed (24h)',
     newUsers: 'New (7d)', email: 'Email', super: 'Super admin', lastLogin: 'Last login', createdAt: 'Created', owner: 'Owner', plan: 'Plan',
-    planExpire: 'Plan expires', code: 'Code', maxAssets: 'Max assets', maxTasks: 'Max checks', maxChannels: 'Max channels', maxMembers: 'Max members', maxVault: 'Max vault items',
+    planExpire: 'Plan expires', code: 'Code', maxDomains: 'Max domains', maxSsl: 'Max SSL', maxAssets: 'Max other assets', maxTasks: 'Max checks', maxChannels: 'Max channels', maxMembers: 'Max members', maxVault: 'Max vault items',
     detectInterval: 'Detect interval (min)', priceMonth: 'Monthly', priceYear: 'Yearly', isDefault: 'Default', sort: 'Sort', unlimitedHint: '-1 = unlimited',
     siteName: 'Site name', registerEnabled: 'Open registration', systemBot: 'Platform Telegram bot', systemBotHint: 'Lets users receive reminders without creating their own bot',
     botToken: 'Bot token', botSet: 'Configured {\'@\'}{name}', clearBot: 'Remove platform bot', webhookOn: 'Webhook enabled', webhookOff: 'Webhook disabled (APP_URL is not HTTPS); run the telegram-poll process',

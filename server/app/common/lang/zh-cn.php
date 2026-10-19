@@ -28,7 +28,7 @@ return [
     'vault_locked'           => '保险箱已锁定，请输入登录密码解锁',
     'resource_vault'         => '保险箱条目',
     'import_too_many'        => '单次最多导入 {:max} 条',
-    'import_quota'           => '本次将新增 {:need} 条，当前套餐还可以添加 {:left} 条，请减少数量或升级套餐',
+    'import_quota'           => '本次将新增 {:need} 个{:resource}，当前套餐还可以添加 {:left} 个，请减少数量或升级套餐',
     'email_taken'            => '该邮箱已注册',
     'too_many_attempts'      => '尝试次数过多，请 10 分钟后再试',
     'login_failed'           => '邮箱或密码错误',
@@ -38,7 +38,9 @@ return [
 
     // 配额
     'quota_exceeded'         => '当前套餐最多可创建 {:limit} 个{:resource}，请升级套餐',
-    'resource_assets'        => '资产',
+    'resource_assets'        => '其他资产',
+    'resource_domains'       => '域名',
+    'resource_ssl'           => 'SSL 证书监控',
     'resource_tasks'         => '检查项',
     'resource_channels'      => '通知渠道',
     'resource_members'       => '成员',

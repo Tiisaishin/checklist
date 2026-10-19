@@ -92,8 +92,8 @@ class Asset extends ApiController
 
     public function save()
     {
-        QuotaService::ensure(AuthContext::tenant(), 'assets');
         $data = $this->input();
+        QuotaService::ensure(AuthContext::tenant(), QuotaService::resourceForType($data['type']));
         $data += ['tenant_id' => $this->tenantId(), 'user_id' => AuthContext::userId(), 'group_id' => GroupModel::resolveId($this->tenantId(), 0)];
 
         $asset = AssetModel::find(AssetModel::create($data)->id);
@@ -108,6 +108,11 @@ class Asset extends ApiController
     {
         $asset = $this->find($id);
         $data  = $this->input();
+        // 改到其他配额类别（如其他资产改为域名）时检查目标类别的配额
+        $target = QuotaService::resourceForType($data['type']);
+        if ($target !== QuotaService::resourceForType($asset->type)) {
+            QuotaService::ensure(AuthContext::tenant(), $target);
+        }
         if (array_key_exists('expire_time', $data) && $data['expire_time'] !== $asset->expire_time) {
             $data['ack_expire_time'] = null;
         }

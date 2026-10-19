@@ -6,6 +6,8 @@ class Plan extends BaseModel
     protected $name = 'plans';
     protected $type = [
         'max_assets'      => 'integer',
+        'max_domains'     => 'integer',
+        'max_ssl'         => 'integer',
         'max_tasks'       => 'integer',
         'max_channels'    => 'integer',
         'max_members'     => 'integer',

@@ -84,7 +84,7 @@ const tzOptions = computed(() => (auth.meta?.timezones || []).map((z) => ({ labe
 const usage = computed(() => {
   const p = auth.tenant?.plan || {}
   const u = auth.tenant?.usage || {}
-  return ['assets', 'tasks', 'channels', 'members', 'vault'].map((k) => ({ key: k, used: u[k] || 0, limit: p['max_' + k] ?? 0 }))
+  return ['domains', 'ssl', 'assets', 'tasks', 'channels', 'members', 'vault'].map((k) => ({ key: k, used: u[k] || 0, limit: p['max_' + k] ?? 0 }))
 })
 
 onMounted(async () => {

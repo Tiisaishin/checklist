@@ -50,8 +50,8 @@ const columns = computed(() => [
   { title: t('admin.plan'), key: 'plan_id', width: 100, render: (r) => planName(r.plan_id) },
   { title: t('admin.planExpire'), key: 'plan_expire_time', width: 150, render: (r) => fmt(r.plan_expire_time) },
   {
-    title: t('settings.usage'), key: 'usage', width: 160,
-    render: (r) => `${r.usage.assets} / ${r.usage.tasks} / ${r.usage.channels}`,
+    title: t('settings.usage'), key: 'usage', width: 240,
+    render: (r) => `${t('settings.domains')} ${r.usage.domains} · SSL ${r.usage.ssl} · ${t('settings.assets')} ${r.usage.assets}`,
   },
   {
     title: t('common.status'), key: 'status', width: 80,

@@ -45,6 +45,8 @@ class Plan extends ApiController
             'code'            => 'require|alphaDash|max:32',
             'name'            => 'require|max:64',
             'max_assets'      => 'require|integer|egt:-1',
+            'max_domains'     => 'require|integer|egt:-1',
+            'max_ssl'         => 'require|integer|egt:-1',
             'max_tasks'       => 'require|integer|egt:-1',
             'max_channels'    => 'require|integer|egt:-1',
             'max_members'     => 'require|integer|egt:-1',

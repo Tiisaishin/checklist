@@ -95,13 +95,11 @@ class ImportService
         $newDomains = $asDomain ? array_diff(array_keys($rows), array_keys($existingDomains)) : [];
         $newSsl     = array_diff(array_keys($sslPlan), array_keys($existingSsl));
 
-        // 4. 配额
-        $plan  = QuotaService::plan($tenant);
-        $limit = (int) ($plan?->max_assets ?? 0);
-        if ($limit >= 0) {
-            $left = max(0, $limit - QuotaService::usage($tenant)['assets']);
-            if (count($newDomains) + count($newSsl) > $left) {
-                throw new ApiException(lang('import_quota', ['need' => count($newDomains) + count($newSsl), 'left' => $left]), 403);
+        // 4. 配额：域名与 SSL 分开计算
+        foreach (['domains' => count($newDomains), 'ssl' => count($newSsl)] as $resource => $need) {
+            $left = QuotaService::remaining($tenant, $resource);
+            if ($need > 0 && $left >= 0 && $need > $left) {
+                throw new ApiException(lang('import_quota', ['resource' => lang('resource_' . $resource), 'need' => $need, 'left' => $left]), 403);
             }
         }
 

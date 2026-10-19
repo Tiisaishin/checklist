@@ -150,12 +150,12 @@ export default {
   settings: {
     profile: '个人资料', locale: '语言', timezone: '时区', notifyTime: '每日提醒时间', notifyTimeHint: '资产到期提醒在每天这个时间之后发送', notifyMode: '提醒方式', notifyModes: { smart: '智能（3 条以内逐条发送，更多时合并为一条汇总）', single: '逐条发送', digest: '每次合并为一条汇总' },
     password: '修改密码', oldPassword: '当前密码', newPassword: '新密码', workspace: '空间', workspaceName: '空间名称',
-    plan: '当前套餐', usage: '用量', expireAt: '到期', assets: '资产', tasks: '检查项', channels: '渠道', members: '成员', vault: '保险箱',
+    plan: '当前套餐', usage: '用量', expireAt: '到期', domains: '域名', ssl: 'SSL 证书', assets: '其他资产', tasks: '检查项', channels: '渠道', members: '成员', vault: '保险箱',
   },
   admin: {
     users: '用户', tenants: '空间', assets: '资产', tasks: '检查项', channels: '活跃渠道', sent24h: '24h 发送', failed24h: '24h 失败',
     newUsers: '7 天新增', email: '邮箱', super: '超管', lastLogin: '最近登录', createdAt: '注册时间', owner: '所有者', plan: '套餐',
-    planExpire: '套餐到期', code: '代码', maxAssets: '资产上限', maxTasks: '检查项上限', maxChannels: '渠道上限', maxMembers: '成员上限', maxVault: '保险箱上限',
+    planExpire: '套餐到期', code: '代码', maxDomains: '域名上限', maxSsl: 'SSL 上限', maxAssets: '其他资产上限', maxTasks: '检查项上限', maxChannels: '渠道上限', maxMembers: '成员上限', maxVault: '保险箱上限',
     detectInterval: '探测间隔（分钟）', priceMonth: '月价', priceYear: '年价', isDefault: '默认套餐', sort: '排序', unlimitedHint: '-1 表示不限',
     siteName: '站点名称', registerEnabled: '开放注册', systemBot: '平台 Telegram Bot', systemBotHint: '配置后用户可直接使用平台 Bot 接收提醒',
     botToken: 'Bot Token', botSet: '已配置 {\'@\'}{name}', clearBot: '移除平台 Bot', webhookOn: 'Webhook 已启用', webhookOff: '未启用 Webhook（APP_URL 非 HTTPS），请运行 telegram-poll 进程',
