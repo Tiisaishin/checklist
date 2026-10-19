@@ -8,7 +8,7 @@ export default {
     default: '默认', reset: '恢复默认', preview: '预览', test: '测试', close: '关闭',
   },
   nav: {
-    dashboard: '概览', assets: '资产到期', tasks: '周期检查', groups: '信息分组', members: '团队成员', channels: '通知渠道', templates: '通知模板',
+    dashboard: '概览', assets: '资产到期', tasks: '周期检查', groups: '信息分组', members: '团队成员', vault: '保险箱', channels: '通知渠道', templates: '通知模板',
     notifications: '通知记录', settings: '个人设置', admin: '平台管理', adminOverview: '运营概览', adminUsers: '用户',
     adminTenants: '空间', adminPlans: '套餐', adminSettings: '系统设置', logout: '退出登录', theme: '切换主题',
   },
@@ -72,6 +72,16 @@ export default {
     accept: '接受邀请', loginToAccept: '登录后接受', registerToAccept: '注册并加入', mismatch: '当前登录的是 {current}，该邀请只能由 {email} 接受。',
     switchAccount: '切换账号', joined: '已加入 {tenant}', invalid: '邀请链接无效或已过期', joinedHint: '注册完成后将自动加入团队',
   },
+  vault: {
+    title: '保险箱', add: '添加条目', desc: '账号、密码、API Key、两步验证密钥加密保存。查看明文需要输入登录密码解锁，所有查看和复制都会留下记录。',
+    locked: '已锁定', unlocked: '已解锁 {time}', unlock: '解锁', lock: '锁定', unlockTitle: '解锁保险箱', unlockTip: '输入登录密码，10 分钟内可查看明文与验证码',
+    name: '标题', type: '类型', url: '网址', username: '用户名', password: '密码', totp: '两步验证（TOTP）', totpHint: 'Base32 密钥，或直接粘贴二维码中的 otpauth:// 链接',
+    notes: '备注', fields: '自定义字段', addField: '添加字段', fieldLabel: '名称', fieldValue: '值', fieldSecret: '敏感',
+    visibility: '可见范围', team: '团队可见', private: '仅自己可见', asset: '关联资产', generate: '生成', detail: '详情', logs: '访问记录',
+    copy: '复制', show: '显示', hide: '隐藏', code: '验证码', creator: '创建人', updated: '更新时间', noReveal: '只读成员不能查看明文',
+    types: { login: '登录账号', api_key: 'API Key', server: '服务器', note: '安全笔记', other: '其他' },
+    actions: { create: '创建', update: '修改', delete: '删除', view: '查看', copy: '复制', totp: '验证码' },
+  },
   channel: {
     title: '通知渠道', add: '添加渠道', mode: 'Bot 类型', system: '平台 Bot', systemDesc: '使用平台提供的 Bot（{\'@\'}{name}），无需配置',
     custom: '我自己的 Bot', customDesc: '使用你通过 {\'@\'}BotFather 创建的 Bot，消息完全由你的 Bot 发送', botToken: 'Bot Token',
@@ -96,12 +106,12 @@ export default {
   settings: {
     profile: '个人资料', locale: '语言', timezone: '时区', notifyTime: '每日提醒时间', notifyTimeHint: '资产到期提醒在每天这个时间之后发送',
     password: '修改密码', oldPassword: '当前密码', newPassword: '新密码', workspace: '空间', workspaceName: '空间名称',
-    plan: '当前套餐', usage: '用量', expireAt: '到期', assets: '资产', tasks: '检查项', channels: '渠道', members: '成员',
+    plan: '当前套餐', usage: '用量', expireAt: '到期', assets: '资产', tasks: '检查项', channels: '渠道', members: '成员', vault: '保险箱',
   },
   admin: {
     users: '用户', tenants: '空间', assets: '资产', tasks: '检查项', channels: '活跃渠道', sent24h: '24h 发送', failed24h: '24h 失败',
     newUsers: '7 天新增', email: '邮箱', super: '超管', lastLogin: '最近登录', createdAt: '注册时间', owner: '所有者', plan: '套餐',
-    planExpire: '套餐到期', code: '代码', maxAssets: '资产上限', maxTasks: '检查项上限', maxChannels: '渠道上限', maxMembers: '成员上限',
+    planExpire: '套餐到期', code: '代码', maxAssets: '资产上限', maxTasks: '检查项上限', maxChannels: '渠道上限', maxMembers: '成员上限', maxVault: '保险箱上限',
     detectInterval: '探测间隔（分钟）', priceMonth: '月价', priceYear: '年价', isDefault: '默认套餐', sort: '排序', unlimitedHint: '-1 表示不限',
     siteName: '站点名称', registerEnabled: '开放注册', systemBot: '平台 Telegram Bot', systemBotHint: '配置后用户可直接使用平台 Bot 接收提醒',
     botToken: 'Bot Token', botSet: '已配置 {\'@\'}{name}', clearBot: '移除平台 Bot', webhookOn: 'Webhook 已启用', webhookOff: '未启用 Webhook（APP_URL 非 HTTPS），请运行 telegram-poll 进程',

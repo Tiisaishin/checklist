@@ -31,6 +31,17 @@ Route::group(function () {
     Route::delete('members/:id', 'Member/delete');
     Route::post('members/:id/transfer', 'Member/transfer');
 
+    Route::get('vault', 'Vault/index');
+    Route::post('vault', 'Vault/save');
+    Route::post('vault/unlock', 'Vault/unlock');
+    Route::post('vault/lock', 'Vault/lock');
+    Route::put('vault/:id', 'Vault/update');
+    Route::delete('vault/:id', 'Vault/delete');
+    Route::post('vault/:id/reveal', 'Vault/reveal');
+    Route::get('vault/:id/totp', 'Vault/totp');
+    Route::post('vault/:id/log', 'Vault/log');
+    Route::get('vault/:id/logs', 'Vault/logs');
+
     Route::get('groups', 'Group/index');
     Route::post('groups', 'Group/save');
     Route::put('groups/:id', 'Group/update');

@@ -37,18 +37,24 @@ class Crypto
         return self::$key;
     }
 
-    public static function encrypt(string $plain): string
+    /** 按用途派生子密钥，例如每个空间的保险箱使用独立密钥 */
+    private static function keyFor(string $context): string
+    {
+        return $context === '' ? self::key() : hash_hmac('sha256', $context, self::key(), true);
+    }
+
+    public static function encrypt(string $plain, string $context = ''): string
     {
         $iv     = random_bytes(12);
         $tag    = '';
-        $cipher = openssl_encrypt($plain, 'aes-256-gcm', self::key(), OPENSSL_RAW_DATA, $iv, $tag);
+        $cipher = openssl_encrypt($plain, 'aes-256-gcm', self::keyFor($context), OPENSSL_RAW_DATA, $iv, $tag);
         if ($cipher === false) {
             throw new RuntimeException('encrypt failed');
         }
         return 'v1:' . base64_encode($iv . $tag . $cipher);
     }
 
-    public static function decrypt(string $payload): ?string
+    public static function decrypt(string $payload, string $context = ''): ?string
     {
         if (!str_starts_with($payload, 'v1:')) {
             return null;
@@ -57,7 +63,7 @@ class Crypto
         if ($bin === false || strlen($bin) < 28) {
             return null;
         }
-        $plain = openssl_decrypt(substr($bin, 28), 'aes-256-gcm', self::key(), OPENSSL_RAW_DATA, substr($bin, 0, 12), substr($bin, 12, 16));
+        $plain = openssl_decrypt(substr($bin, 28), 'aes-256-gcm', self::keyFor($context), OPENSSL_RAW_DATA, substr($bin, 0, 12), substr($bin, 12, 16));
         return $plain === false ? null : $plain;
     }
 

@@ -47,6 +47,7 @@ class Auth
         AuthContext::$user   = $user;
         AuthContext::$tenant = $tenant;
         AuthContext::$role   = (string) $membership->role;
+        AuthContext::$token  = trim($token);
 
         if (!AuthContext::canWrite() && !in_array($request->method(), ['GET', 'HEAD'], true) && !str_starts_with($request->pathinfo(), 'auth/')) {
             throw new ApiException(lang('forbidden'), 403);

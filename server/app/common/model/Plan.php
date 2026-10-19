@@ -9,6 +9,7 @@ class Plan extends BaseModel
         'max_tasks'       => 'integer',
         'max_channels'    => 'integer',
         'max_members'     => 'integer',
+        'max_vault'       => 'integer',
         'detect_interval' => 'integer',
         'price_month'     => 'float',
         'price_year'      => 'float',

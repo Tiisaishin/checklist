@@ -12,6 +12,8 @@ class AuthContext
     public static ?User $user = null;
     public static ?Tenant $tenant = null;
     public static string $role = '';
+    /** 当前请求的登录令牌（明文，仅在内存中） */
+    public static string $token = '';
 
     public static function user(): User
     {

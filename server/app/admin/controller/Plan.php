@@ -48,6 +48,7 @@ class Plan extends ApiController
             'max_tasks'       => 'require|integer|egt:-1',
             'max_channels'    => 'require|integer|egt:-1',
             'max_members'     => 'require|integer|egt:-1',
+            'max_vault'       => 'integer|egt:-1',
             'detect_interval' => 'require|integer|egt:30',
             'price_month'     => 'float|egt:0',
             'price_year'      => 'float|egt:0',

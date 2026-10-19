@@ -8,7 +8,7 @@ export default {
     default: 'Default', reset: 'Reset to default', preview: 'Preview', test: 'Test', close: 'Close',
   },
   nav: {
-    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', groups: 'Groups', members: 'Team', channels: 'Channels', templates: 'Templates',
+    dashboard: 'Overview', assets: 'Expiring assets', tasks: 'Recurring checks', groups: 'Groups', members: 'Team', vault: 'Vault', channels: 'Channels', templates: 'Templates',
     notifications: 'Notification log', settings: 'Settings', admin: 'Platform', adminOverview: 'Overview', adminUsers: 'Users',
     adminTenants: 'Workspaces', adminPlans: 'Plans', adminSettings: 'System settings', logout: 'Sign out', theme: 'Toggle theme',
   },
@@ -72,6 +72,16 @@ export default {
     accept: 'Accept invitation', loginToAccept: 'Sign in to accept', registerToAccept: 'Sign up and join', mismatch: 'You are signed in as {current}; this invitation can only be accepted by {email}.',
     switchAccount: 'Switch account', joined: 'Joined {tenant}', invalid: 'This invitation is invalid or has expired', joinedHint: 'You will join the team after signing up',
   },
+  vault: {
+    title: 'Vault', add: 'Add item', desc: 'Accounts, passwords, API keys and 2FA secrets are stored encrypted. Unlock with your password to reveal; every view and copy is logged.',
+    locked: 'Locked', unlocked: 'Unlocked {time}', unlock: 'Unlock', lock: 'Lock', unlockTitle: 'Unlock vault', unlockTip: 'Enter your password to reveal secrets and codes for 10 minutes',
+    name: 'Title', type: 'Type', url: 'URL', username: 'Username', password: 'Password', totp: 'Two-factor (TOTP)', totpHint: 'Base32 secret, or paste the otpauth:// link from the QR code',
+    notes: 'Notes', fields: 'Custom fields', addField: 'Add field', fieldLabel: 'Label', fieldValue: 'Value', fieldSecret: 'Secret',
+    visibility: 'Visibility', team: 'Team', private: 'Only me', asset: 'Linked asset', generate: 'Generate', detail: 'Details', logs: 'Access log',
+    copy: 'Copy', show: 'Show', hide: 'Hide', code: 'Code', creator: 'Creator', updated: 'Updated', noReveal: 'Viewers cannot reveal secrets',
+    types: { login: 'Login', api_key: 'API key', server: 'Server', note: 'Secure note', other: 'Other' },
+    actions: { create: 'Created', update: 'Updated', delete: 'Deleted', view: 'Viewed', copy: 'Copied', totp: 'Code' },
+  },
   channel: {
     title: 'Channels', add: 'Add channel', mode: 'Bot', system: 'Platform bot', systemDesc: 'Use the platform bot ({\'@\'}{name}), no setup needed',
     custom: 'My own bot', customDesc: 'Use a bot you created with {\'@\'}BotFather; messages are sent by your bot', botToken: 'Bot token',
@@ -96,12 +106,12 @@ export default {
   settings: {
     profile: 'Profile', locale: 'Language', timezone: 'Time zone', notifyTime: 'Daily reminder time', notifyTimeHint: 'Asset reminders are sent after this time each day',
     password: 'Change password', oldPassword: 'Current password', newPassword: 'New password', workspace: 'Workspace', workspaceName: 'Workspace name',
-    plan: 'Plan', usage: 'Usage', expireAt: 'Expires', assets: 'Assets', tasks: 'Checks', channels: 'Channels', members: 'Members',
+    plan: 'Plan', usage: 'Usage', expireAt: 'Expires', assets: 'Assets', tasks: 'Checks', channels: 'Channels', members: 'Members', vault: 'Vault',
   },
   admin: {
     users: 'Users', tenants: 'Workspaces', assets: 'Assets', tasks: 'Checks', channels: 'Active channels', sent24h: 'Sent (24h)', failed24h: 'Failed (24h)',
     newUsers: 'New (7d)', email: 'Email', super: 'Super admin', lastLogin: 'Last login', createdAt: 'Created', owner: 'Owner', plan: 'Plan',
-    planExpire: 'Plan expires', code: 'Code', maxAssets: 'Max assets', maxTasks: 'Max checks', maxChannels: 'Max channels', maxMembers: 'Max members',
+    planExpire: 'Plan expires', code: 'Code', maxAssets: 'Max assets', maxTasks: 'Max checks', maxChannels: 'Max channels', maxMembers: 'Max members', maxVault: 'Max vault items',
     detectInterval: 'Detect interval (min)', priceMonth: 'Monthly', priceYear: 'Yearly', isDefault: 'Default', sort: 'Sort', unlimitedHint: '-1 = unlimited',
     siteName: 'Site name', registerEnabled: 'Open registration', systemBot: 'Platform Telegram bot', systemBotHint: 'Lets users receive reminders without creating their own bot',
     botToken: 'Bot token', botSet: 'Configured {\'@\'}{name}', clearBot: 'Remove platform bot', webhookOn: 'Webhook enabled', webhookOff: 'Webhook disabled (APP_URL is not HTTPS); run the telegram-poll process',

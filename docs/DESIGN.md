@@ -120,8 +120,8 @@ channels(id, tenant_id, user_id, type, config JSON(加密), verified_at)
 templates(id, tenant_id, channel_type, locale, content)
 notification_logs(id, rule_id, target_date, offset, channel_id, status, error)
 invitations(id, tenant_id, inviter_id, email, role, token(sha256), status, expire_time, accept_user_id)
-vault_items(id, tenant_id, project_id, title, data_encrypted, ...)
-vault_access_logs / audit_logs / plans / subscriptions / api_tokens
+vault_items(id, tenant_id, group_id, asset_id, user_id, type, title, url, visibility, secret(加密), has_totp)
+vault_logs / audit_logs / plans / subscriptions / api_tokens
 ```
 
 ## 7. 迭代计划
@@ -146,4 +146,5 @@ vault_access_logs / audit_logs / plans / subscriptions / api_tokens
 - [x] Docker Compose 部署
 - [x] 信息分组：默认分组 + 每个分组单独指定通知渠道（Bot）
 - [x] 团队成员邀请：邀请链接（绑定邮箱、7 天、一次性）、角色管理、移出、转让所有权、退出空间
-- [ ] 保险箱、更多通知渠道、日历/iCal、导入导出（v2）
+- [x] 保险箱：分空间派生密钥加密、密码解锁 10 分钟、TOTP、密码生成、私密条目、访问审计、套餐上限
+- [ ] 更多通知渠道、日历/iCal、导入导出（v2）

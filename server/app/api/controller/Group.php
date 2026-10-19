@@ -7,6 +7,7 @@ use app\common\model\Asset;
 use app\common\model\Channel;
 use app\common\model\Group as GroupModel;
 use app\common\model\Task;
+use app\common\model\VaultItem;
 use app\common\service\AuthContext;
 
 /**
@@ -64,6 +65,7 @@ class Group extends ApiController
         $default = GroupModel::defaultFor($this->tenantId());
         Asset::withTrashed()->where('group_id', $id)->update(['group_id' => $default->id]);
         Task::withTrashed()->where('group_id', $id)->update(['group_id' => $default->id]);
+        VaultItem::where('group_id', $id)->update(['group_id' => $default->id]);
         $group->delete();
         return $this->ok(null, lang('deleted'));
     }

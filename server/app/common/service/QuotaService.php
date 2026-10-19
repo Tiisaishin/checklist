@@ -8,6 +8,7 @@ use app\common\model\Plan;
 use app\common\model\Task;
 use app\common\model\Tenant;
 use app\common\model\TenantUser;
+use app\common\model\VaultItem;
 
 /**
  * 套餐配额
@@ -31,11 +32,12 @@ class QuotaService
             'tasks'    => Task::where('tenant_id', $tenant->id)->count(),
             'channels' => Channel::where('tenant_id', $tenant->id)->count(),
             'members'  => TenantUser::where('tenant_id', $tenant->id)->count(),
+            'vault'    => VaultItem::where('tenant_id', $tenant->id)->count(),
         ];
     }
 
     /**
-     * @param string $resource assets / tasks / channels / members
+     * @param string $resource assets / tasks / channels / members / vault
      */
     public static function ensure(Tenant $tenant, string $resource): void
     {
