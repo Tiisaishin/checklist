@@ -16,6 +16,14 @@ class TemplateService
     public const VARIABLES = [
         'asset_expire' => ['name', 'type', 'identifier', 'provider', 'expire_date', 'days_left', 'status_text', 'price', 'currency', 'url', 'notes', 'group'],
         'task_due'     => ['title', 'description', 'due_time', 'days_left', 'status_text', 'frequency', 'group', 'steps'],
+        // 监控变化事件
+        'domain_renewed'  => ['name', 'old_expire', 'new_expire', 'provider', 'group'],
+        'ns_changed'      => ['name', 'old_ns', 'new_ns', 'group'],
+        'domain_status'   => ['name', 'statuses', 'phase_text', 'expire_date', 'group'],
+        'ssl_renewed'     => ['name', 'old_expire', 'new_expire', 'issuer', 'group'],
+        'ssl_error'       => ['name', 'issue_text', 'error', 'expire_date', 'group'],
+        'ssl_renew_stuck' => ['name', 'expire_date', 'days_left', 'issuer', 'group'],
+        'detect_failed'   => ['name', 'type', 'error', 'fail_count', 'group'],
     ];
 
     public static function defaultContent(string $scene, string $locale): string
@@ -101,6 +109,35 @@ class TemplateService
             'frequency'   => self::frequencyText($task, $locale),
             'group'       => $task->group_id ? (string) Group::where('id', $task->group_id)->value('name') : '',
             'steps'       => implode("\n", $steps),
+        ];
+    }
+
+    public static function eventVars(Asset $asset, User $user, string $type, array $data): array
+    {
+        $tz     = TimeHelper::tz($user->timezone);
+        $locale = $user->locale;
+        $date   = fn (?string $v) => $v ? (TimeHelper::fromDb($v)?->setTimezone($tz)->format('Y-m-d') ?? '-') : '-';
+        $expire = TimeHelper::fromDb($asset->expire_time);
+        $days   = $expire ? TimeHelper::daysBetween(new DateTimeImmutable('now', $tz), $expire->setTimezone($tz)) : 0;
+        $meta   = (array) $asset->detect_meta;
+
+        return [
+            'name'        => $asset->name,
+            'type'        => trans('asset_type_' . $asset->type, [], $locale),
+            'provider'    => $asset->provider,
+            'group'       => $asset->group_id ? (string) Group::where('id', $asset->group_id)->value('name') : '',
+            'expire_date' => $date($asset->expire_time),
+            'days_left'   => $days,
+            'old_expire'  => $date($data['old_expire'] ?? null),
+            'new_expire'  => $date($data['new_expire'] ?? null),
+            'old_ns'      => implode(', ', (array) ($data['old'] ?? [])),
+            'new_ns'      => implode(', ', (array) ($data['new'] ?? [])),
+            'statuses'    => implode('、', array_map(fn ($st) => trans('domain_status_' . $st, [], $locale), (array) ($data['statuses'] ?? []))),
+            'phase_text'  => trans('phase_' . ($data['phase'] ?? 'active'), [], $locale),
+            'issuer'      => (string) ($data['issuer'] ?? $asset->provider),
+            'issue_text'  => trans('issue_' . ($data['issue'] ?? 'unknown'), [], $locale),
+            'error'       => mb_substr((string) ($data['error'] ?? ($meta['verify_error'] ?? '')), 0, 200),
+            'fail_count'  => (int) ($data['fail_count'] ?? 0),
         ];
     }
 

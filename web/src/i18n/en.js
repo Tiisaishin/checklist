@@ -36,6 +36,9 @@ export default {
     types: { domain: 'Domain', ssl: 'SSL certificate', server: 'Server', subscription: 'Subscription', license: 'License', account: 'Account', other: 'Other' },
     cycles: { monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly', once: 'One-time' },
     status: { left: '{n} d', today: 'Today', overdue: '{n} d overdue' },
+    phases: { grace: 'Grace', redemption: 'Redemption', pending_delete: 'Pending delete', hold: 'On hold' },
+    issues: { expired: 'Expired', self_signed: 'Self-signed', mismatch: 'Host mismatch', untrusted: 'Untrusted' },
+    events: 'Changes', noEvents: 'No changes yet', nextDetect: 'Next check', failCount: 'Failures in a row',
   },
   importer: {
     title: 'Import domains', button: 'Import', export: 'Export CSV',
@@ -115,11 +118,11 @@ export default {
   },
   template: {
     title: 'Templates', desc: 'Customize the messages you receive. Telegram HTML supported: <b> <i> <u> <s> <code> <a href>',
-    scenes: { asset_expire: 'Asset expiry', task_due: 'Recurring check' }, variables: 'Variables (click to insert)', custom: 'Customized',
+    scenes: { asset_expire: 'Asset expiry', task_due: 'Recurring check', domain_renewed: 'Domain renewed', ns_changed: 'Nameservers changed', domain_status: 'Domain status alert', ssl_renewed: 'SSL renewed', ssl_error: 'SSL problem', ssl_renew_stuck: 'SSL auto-renewal stuck', detect_failed: 'Checks failing' }, variables: 'Variables (click to insert)', custom: 'Customized',
     vars: {
       name: 'Name', type: 'Type', identifier: 'Identifier', provider: 'Provider', expire_date: 'Expiry date', days_left: 'Days left',
       status_text: 'Status text', price: 'Price', currency: 'Currency', url: 'URL', notes: 'Notes', group: 'Group', title: 'Title',
-      description: 'Description', due_time: 'Due time', frequency: 'Frequency', steps: 'Steps',
+      description: 'Description', due_time: 'Due time', frequency: 'Frequency', steps: 'Steps', group: 'Group', old_expire: 'Old expiry', new_expire: 'New expiry', old_ns: 'Old NS', new_ns: 'New NS', statuses: 'Statuses', phase_text: 'Phase', issuer: 'Issuer', issue_text: 'Problem', error: 'Error', fail_count: 'Failures',
     },
   },
   notification: { title: 'Notification log', target: 'Target', content: 'Content', sentAt: 'Time', sent: 'Sent', failed: 'Failed', pending: 'Pending' },

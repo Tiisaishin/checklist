@@ -32,6 +32,31 @@ class ChannelRouter
         return $this->defaults[$tenantId] ?: null;
     }
 
+    /**
+     * 条目的接收渠道及渠道所属用户（事件通知用）
+     * @return array<int, array{0: \app\common\model\Channel, 1: \app\common\model\User}>
+     */
+    public static function recipientsFor(int $tenantId, int $groupId, ?array $itemChannels): array
+    {
+        $ids      = (new self())->resolve($tenantId, $groupId, $itemChannels);
+        $query    = \app\common\model\Channel::where('tenant_id', $tenantId)->where('status', 'active');
+        if ($ids !== null) {
+            $query->whereIn('id', $ids ?: [0]);
+        }
+        $channels = $query->select();
+        $users    = [];
+        foreach (\app\common\model\User::whereIn('id', array_unique($channels->column('user_id')) ?: [0])->where('status', 1)->select() as $u) {
+            $users[$u->id] = $u;
+        }
+        $out = [];
+        foreach ($channels as $c) {
+            if (isset($users[$c->user_id])) {
+                $out[] = [$c, $users[$c->user_id]];
+            }
+        }
+        return $out;
+    }
+
     private function loadTenant(int $tenantId): void
     {
         if (isset($this->defaults[$tenantId])) {

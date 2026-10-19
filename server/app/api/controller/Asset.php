@@ -7,6 +7,7 @@ use app\common\detector\DomainDetector;
 use app\common\detector\SslDetector;
 use app\common\exception\ApiException;
 use app\common\model\Asset as AssetModel;
+use app\common\model\AssetEvent;
 use app\common\service\AssetService;
 use app\common\service\AuthContext;
 use app\common\service\DetectService;
@@ -128,6 +129,13 @@ class Asset extends ApiController
         return $this->ok(self::present(AssetModel::find($id)));
     }
 
+    /** 监控变化记录 */
+    public function events(int $id)
+    {
+        $this->find($id);
+        return $this->ok(AssetEvent::where('asset_id', $id)->order('id', 'desc')->limit(50)->select());
+    }
+
     public function ack(int $id)
     {
         $asset = $this->find($id);
@@ -221,6 +229,9 @@ class Asset extends ApiController
             ? TimeHelper::daysBetween((new DateTimeImmutable('now', TimeHelper::utc()))->setTimezone($tz), $expire->setTimezone($tz))
             : null;
         $data['acked'] = $asset->ack_expire_time && $asset->ack_expire_time === $asset->expire_time;
+        $meta          = (array) $asset->detect_meta;
+        $data['phase'] = $asset->type === 'domain' ? DomainDetector::phase($data['days_left'], (array) ($meta['status'] ?? [])) : null;
+        $data['issue'] = $asset->type === 'ssl' ? (string) ($meta['issue'] ?? '') : null;
         return $data;
     }
 }

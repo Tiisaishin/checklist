@@ -36,6 +36,9 @@ export default {
     types: { domain: '域名', ssl: 'SSL 证书', server: '服务器', subscription: '订阅服务', license: '软件授权', account: '账号', other: '其他' },
     cycles: { monthly: '每月', quarterly: '每季度', yearly: '每年', once: '一次性' },
     status: { left: '{n} 天', today: '今天', overdue: '过期 {n} 天' },
+    phases: { grace: '宽限期', redemption: '赎回期', pending_delete: '待删除', hold: '暂停解析' },
+    issues: { expired: '证书已过期', self_signed: '自签名', mismatch: '域名不匹配', untrusted: '不受信任' },
+    events: '变化记录', noEvents: '暂无变化', nextDetect: '下次检测', failCount: '连续失败',
   },
   importer: {
     title: '批量导入域名', button: '批量导入', export: '导出 CSV',
@@ -115,11 +118,11 @@ export default {
   },
   template: {
     title: '通知模板', desc: '每位用户可以自定义自己收到的消息内容，支持 Telegram HTML：<b> <i> <u> <s> <code> <a href>',
-    scenes: { asset_expire: '资产到期提醒', task_due: '周期检查提醒' }, variables: '可用变量（点击插入）', custom: '已自定义',
+    scenes: { asset_expire: '资产到期提醒', task_due: '周期检查提醒', domain_renewed: '域名续费成功', ns_changed: 'DNS 服务器变化', domain_status: '域名状态异常', ssl_renewed: 'SSL 证书已更新', ssl_error: 'SSL 证书异常', ssl_renew_stuck: 'SSL 自动续期可能失败', detect_failed: '连续检测失败' }, variables: '可用变量（点击插入）', custom: '已自定义',
     vars: {
       name: '名称', type: '类型', identifier: '标识', provider: '服务商', expire_date: '到期日期', days_left: '剩余天数',
       status_text: '状态文案', price: '价格', currency: '币种', url: '链接', notes: '备注', group: '分组', title: '标题',
-      description: '说明', due_time: '到期时间', frequency: '频率', steps: '步骤',
+      description: '说明', due_time: '到期时间', frequency: '频率', steps: '步骤', group: '分组', old_expire: '原到期时间', new_expire: '新到期时间', old_ns: '原 DNS', new_ns: '新 DNS', statuses: '域名状态', phase_text: '所处阶段', issuer: '签发机构', issue_text: '问题描述', error: '错误信息', fail_count: '失败次数',
     },
   },
   notification: { title: '通知记录', target: '对象', content: '内容', sentAt: '时间', sent: '已发送', failed: '失败', pending: '等待' },

@@ -99,6 +99,7 @@ class DomainDetector
         }
 
         foreach ($candidates as $name) {
+            $this->throttle((string) parse_url($base, PHP_URL_HOST));
             $res = $this->http->get(rtrim($base, '/') . '/domain/' . $name);
             if ($res->getStatusCode() === 404) {
                 continue;
@@ -174,8 +175,16 @@ class DomainDetector
 
         $registrar = preg_match('/^\s*(?:Registrar|Sponsoring Registrar|registrar):\s*(.+)$/mi', $text, $m) ? trim($m[1]) : '';
         $expire    = $this->parseExpiry($text);
+        preg_match_all('/^\s*(?:Domain )?Status:\s*([A-Za-z ]+?)(?:\s+https?:\S+)?\s*$/mi', $text, $sm);
+        preg_match_all('/^\s*(?:Name Server|nserver):\s*(\S+)/mi', $text, $nm);
 
-        return new DetectResult($expire, $registrar, ['source' => 'whois', 'server' => $server, 'domain' => $domain]);
+        return new DetectResult($expire, $registrar, [
+            'source'      => 'whois',
+            'server'      => $server,
+            'domain'      => $domain,
+            'status'      => array_values(array_unique(array_map('trim', $sm[1] ?? []))),
+            'nameservers' => array_values(array_unique(array_map(fn ($n) => strtolower(rtrim($n, '.')), $nm[1] ?? []))),
+        ]);
     }
 
     private function parseExpiry(string $text): ?string
@@ -203,8 +212,52 @@ class DomainDetector
         return null;
     }
 
+    /** 同一查询服务器至少间隔 1 秒，避免批量探测被限流 */
+    private function throttle(string $host): void
+    {
+        $key  = 'detect:last:' . $host;
+        $last = (float) Cache::get($key, 0);
+        $wait = $last + 1.0 - microtime(true);
+        if ($wait > 0) {
+            usleep((int) ($wait * 1e6));
+        }
+        Cache::set($key, microtime(true), 60);
+    }
+
+    /** 异常状态（暂停解析、赎回期、待删除等），统一为小写无空格 */
+    public static function abnormalStatuses(array $statuses): array
+    {
+        $abnormal = ['clienthold', 'serverhold', 'redemptionperiod', 'pendingdelete', 'pendingrestore', 'inactive', 'serverinactive'];
+        $out      = [];
+        foreach ($statuses as $s) {
+            $key = strtolower(preg_replace('/[\s_-]+/', '', (string) $s));
+            if (in_array($key, $abnormal, true)) {
+                $out[] = $key;
+            }
+        }
+        $out = array_values(array_unique($out));
+        sort($out);
+        return $out;
+    }
+
+    /**
+     * 域名所处阶段：active 正常 / grace 已过期（续费宽限期）/ redemption 赎回期 / pending_delete 待删除 / hold 暂停解析
+     */
+    public static function phase(?int $daysLeft, array $statuses): string
+    {
+        $abn = self::abnormalStatuses($statuses);
+        return match (true) {
+            in_array('pendingdelete', $abn, true)                                   => 'pending_delete',
+            in_array('redemptionperiod', $abn, true), in_array('pendingrestore', $abn, true) => 'redemption',
+            $daysLeft !== null && $daysLeft < 0                                     => 'grace',
+            in_array('clienthold', $abn, true), in_array('serverhold', $abn, true)  => 'hold',
+            default                                                                 => 'active',
+        };
+    }
+
     private function whoisQuery(string $server, string $query): string
     {
+        $this->throttle($server);
         $fp = @fsockopen($server, 43, $errno, $errstr, 10);
         if (!$fp) {
             throw new RuntimeException("{$server}: {$errstr}");

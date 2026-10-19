@@ -59,6 +59,7 @@ Route::group(function () {
     Route::put('assets/:id', 'Asset/update');
     Route::delete('assets/:id', 'Asset/delete');
     Route::post('assets/:id/detect', 'Asset/detect');
+    Route::get('assets/:id/events', 'Asset/events');
     Route::post('assets/:id/ack', 'Asset/ack');
     Route::post('assets/:id/renew', 'Asset/renew');
     Route::post('assets/:id/snooze', 'Asset/snooze');

@@ -36,11 +36,20 @@
     <n-modal v-model:show="detailVisible" preset="card" :title="t('asset.detectInfo')" style="max-width: 560px">
       <n-descriptions v-if="detail" :column="1" label-placement="left" size="small" bordered>
         <n-descriptions-item :label="t('asset.lastDetect')">{{ fmt(detail.last_detect_time) }}</n-descriptions-item>
+        <n-descriptions-item :label="t('asset.nextDetect')">{{ fmt(detail.next_detect_time) }}</n-descriptions-item>
+        <n-descriptions-item v-if="detail.fail_count" :label="t('asset.failCount')">{{ detail.fail_count }}</n-descriptions-item>
         <n-descriptions-item v-if="detail.detect_error" :label="t('asset.detectFailed')"><span style="color:#d03050">{{ detail.detect_error }}</span></n-descriptions-item>
         <n-descriptions-item v-for="(v, k) in detail.detect_meta || {}" :key="k" :label="k">
           <span class="mono">{{ Array.isArray(v) ? v.join(', ') : String(v) }}</span>
         </n-descriptions-item>
       </n-descriptions>
+      <h4 style="margin: 16px 0 8px">{{ t('asset.events') }}</h4>
+      <n-empty v-if="!events.length" size="small" :description="t('asset.noEvents')" />
+      <n-timeline v-else>
+        <n-timeline-item v-for="e in events" :key="e.id" :type="eventType(e.type)" :title="t('template.scenes.' + e.type)" :time="fmt(e.create_time)">
+          <span class="muted mono">{{ eventText(e) }}</span>
+        </n-timeline-item>
+      </n-timeline>
     </n-modal>
   </div>
 </template>
@@ -98,10 +107,12 @@ const columns = computed(() => [
     render: (r) => h(NTag, { size: 'small', bordered: false }, () => t('asset.types.' + r.type)),
   },
   {
-    title: t('asset.expire'), key: 'expire_time', width: 190,
+    title: t('asset.expire'), key: 'expire_time', width: 250,
     render: (r) => h('div', { style: 'display:flex;align-items:center;gap:6px' }, [
       h('span', fmtDate(r.expire_time)),
       h(DaysTag, { days: r.days_left, muted: r.acked }),
+      r.phase && r.phase !== 'active' ? h(NTag, { size: 'small', type: 'error', bordered: false, round: true }, () => t('asset.phases.' + r.phase)) : null,
+      r.issue ? h(NTag, { size: 'small', type: 'error', bordered: false, round: true }, () => t('asset.issues.' + r.issue)) : null,
       r.auto_detect ? detectIcon(r) : null,
     ]),
   },
@@ -175,9 +186,23 @@ function exportCsv() {
   download(`/api/assets/export?${qs}`, `assets-${new Date().toISOString().slice(0, 10)}.csv`)
 }
 
-function showDetail(r) {
+const events = ref([])
+async function showDetail(r) {
   detail.value = r
+  events.value = []
   detailVisible.value = true
+  events.value = await api.get(`/api/assets/${r.id}/events`, null, { silent: true }).catch(() => [])
+}
+function eventType(type) {
+  return { domain_renewed: 'success', ssl_renewed: 'success', ns_changed: 'warning', ssl_renew_stuck: 'warning' }[type] || 'error'
+}
+function eventText(e) {
+  const d = e.data || {}
+  if (d.old_expire || d.new_expire) return `${fmtDate(d.old_expire)} → ${fmtDate(d.new_expire)}`
+  if (d.old) return `${d.old.join(', ')} → ${d.new.join(', ')}`
+  if (d.statuses) return d.statuses.join(', ')
+  if (d.issue) return t('asset.issues.' + d.issue) + (d.error ? ` · ${d.error}` : '')
+  return d.error || ''
 }
 
 function openForm(r = null) {

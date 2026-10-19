@@ -60,10 +60,25 @@ class SslDetector
             }
         }
 
-        $issuer = $info['issuer']['O'] ?? ($info['issuer']['CN'] ?? '');
+        $issuer    = $info['issuer']['O'] ?? ($info['issuer']['CN'] ?? '');
+        $validTo   = (int) $info['validTo_time_t'];
+        $validFrom = (int) $info['validFrom_time_t'];
+        $subjectCn = $info['subject']['CN'] ?? '';
+
+        // 问题类型：expired / self_signed / mismatch / untrusted
+        $issue = '';
+        if ($validTo < time()) {
+            $issue = 'expired';
+        } elseif (($info['issuer'] ?? []) == ($info['subject'] ?? [])) {
+            $issue = 'self_signed';
+        } elseif (!self::hostMatches($host, $san ?: [is_array($subjectCn) ? reset($subjectCn) : $subjectCn])) {
+            $issue = 'mismatch';
+        } elseif (!$trusted) {
+            $issue = 'untrusted';
+        }
 
         return new DetectResult(
-            gmdate('Y-m-d H:i:s', (int) $info['validTo_time_t']),
+            gmdate('Y-m-d H:i:s', $validTo),
             is_array($issuer) ? implode(', ', $issuer) : (string) $issuer,
             [
                 'source'       => 'tls',
@@ -71,13 +86,33 @@ class SslDetector
                 'port'         => $port,
                 'subject'      => $info['subject']['CN'] ?? '',
                 'issuer_cn'    => $info['issuer']['CN'] ?? '',
-                'valid_from'   => gmdate('Y-m-d H:i:s', (int) $info['validFrom_time_t']),
+                'valid_from'   => gmdate('Y-m-d H:i:s', $validFrom),
                 'san'          => array_slice($san, 0, 50),
                 'serial'       => $info['serialNumberHex'] ?? '',
                 'trusted'      => $trusted,
                 'verify_error' => mb_substr($verifyError, 0, 200),
+                'issue'        => $issue,
+                // Let's Encrypt 等 90 天短期证书，应由自动续期提前更换
+                'short_lived'  => ($validTo - $validFrom) <= 100 * 86400,
             ]
         );
+    }
+
+    /** 证书域名（含 *.example.com 通配）是否覆盖主机名 */
+    public static function hostMatches(string $host, array $names): bool
+    {
+        $host = strtolower($host);
+        foreach ($names as $name) {
+            $name = strtolower(trim((string) $name));
+            if ($name === $host) {
+                return true;
+            }
+            if (str_starts_with($name, '*.') && substr_count($host, '.') === substr_count($name, '.')
+                && str_ends_with($host, substr($name, 1))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** @return \OpenSSLCertificate */

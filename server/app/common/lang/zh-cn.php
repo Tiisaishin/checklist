@@ -123,4 +123,32 @@ return [
     // 默认通知模板（变量用 {name} 形式）
     'tpl_asset_expire'       => "⏰ <b>{type}到期提醒</b>\n\n<b>{name}</b>\n{status_text}（{expire_date}）\n服务商：{provider}\n续费：{price}\n{url}",
     'tpl_task_due'           => "📋 <b>检查提醒</b>\n\n<b>{title}</b>\n{status_text} · {frequency}\n时间：{due_time}\n{steps}\n{description}",
+
+    // 域名状态与阶段
+    'domain_status_clienthold'       => '注册商暂停解析',
+    'domain_status_serverhold'       => '注册局暂停解析',
+    'domain_status_redemptionperiod' => '赎回期',
+    'domain_status_pendingdelete'    => '待删除',
+    'domain_status_pendingrestore'   => '赎回处理中',
+    'domain_status_inactive'         => '未配置 DNS',
+    'domain_status_serverinactive'   => '注册局未激活',
+    'phase_active'                   => '正常',
+    'phase_grace'                    => '已过期（续费宽限期，通常可按原价续费）',
+    'phase_redemption'               => '赎回期（需要高价赎回）',
+    'phase_pending_delete'           => '待删除（即将被释放，可能被抢注）',
+    'phase_hold'                     => '暂停解析（网站和邮件不可用）',
+    'issue_expired'                  => '证书已过期',
+    'issue_self_signed'              => '自签名证书',
+    'issue_mismatch'                 => '证书与域名不匹配',
+    'issue_untrusted'                => '证书链不受信任',
+    'issue_unknown'                  => '证书异常',
+
+    // 事件通知默认模板
+    'tpl_domain_renewed'  => "✅ <b>域名续费成功</b>\n\n<b>{name}</b>\n到期时间：{old_expire} → <b>{new_expire}</b>\n注册商：{provider}",
+    'tpl_ns_changed'      => "⚠️ <b>DNS 服务器发生变化</b>\n\n<b>{name}</b>\n原来：{old_ns}\n现在：{new_ns}\n\n如果不是你本人修改，请立即检查域名账号安全。",
+    'tpl_domain_status'   => "🚨 <b>域名状态异常</b>\n\n<b>{name}</b>\n状态：{statuses}\n阶段：{phase_text}\n到期时间：{expire_date}",
+    'tpl_ssl_renewed'     => "🔁 <b>SSL 证书已更新</b>\n\n<b>{name}</b>\n到期时间：{old_expire} → <b>{new_expire}</b>\n签发：{issuer}",
+    'tpl_ssl_error'       => "🚨 <b>SSL 证书异常：{issue_text}</b>\n\n<b>{name}</b>\n到期时间：{expire_date}\n{error}",
+    'tpl_ssl_renew_stuck' => "🟠 <b>SSL 自动续期可能失败</b>\n\n<b>{name}</b>\n证书将在 <b>{days_left}</b> 天后（{expire_date}）过期，但仍未更换。\n签发：{issuer}\n请检查 certbot / acme.sh / 面板的自动续期任务。",
+    'tpl_detect_failed'   => "❗ <b>连续 {fail_count} 次检测失败</b>\n\n<b>{name}</b>（{type}）\n{error}",
 ];

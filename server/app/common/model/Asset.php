@@ -19,6 +19,7 @@ class Asset extends BaseModel
         'group_id'        => 'integer',
         'parent_id'       => 'integer',
         'import_batch_id' => 'integer',
+        'fail_count'      => 'integer',
         'auto_detect'     => 'boolean',
         'auto_renew'      => 'boolean',
         'remind_overdue'  => 'boolean',
