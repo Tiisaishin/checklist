@@ -45,6 +45,43 @@ class Asset extends ApiController
         return $this->ok($result);
     }
 
+    /** 导出 CSV（带 BOM，Excel 可直接打开） */
+    public function export()
+    {
+        $query = AssetModel::where('tenant_id', $this->tenantId())->where('status', $this->request->param('status', 'active'));
+        if ($types = array_filter(explode(',', (string) $this->request->param('type', '')))) {
+            $query->whereIn('type', $types);
+        }
+        if ($groupId = (int) $this->request->param('group_id')) {
+            $query->where('group_id', $groupId);
+        }
+        $groups = GroupModel::where('tenant_id', $this->tenantId())->column('name', 'id');
+        $tz     = TimeHelper::tz(AuthContext::user()->timezone);
+
+        $out = fopen('php://temp', 'r+');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, [lang('field_type'), lang('field_name'), lang('field_identifier'), lang('field_expire_time'), 'days_left', 'provider', lang('field_group_id'), 'price', 'currency', 'auto_detect', 'detect_status', 'notes']);
+        $query->order('expire_time')->chunk(500, function ($rows) use ($out, $groups, $tz) {
+            foreach ($rows as $a) {
+                $p = self::present($a);
+                fputcsv($out, [
+                    $a->type, $a->name, $a->identifier,
+                    $a->expire_time ? TimeHelper::fromDb($a->expire_time)->setTimezone($tz)->format('Y-m-d H:i') : '',
+                    $p['days_left'], $a->provider, $groups[$a->group_id] ?? '', $a->price, $a->currency,
+                    $a->auto_detect ? 1 : 0, $a->detect_status, (string) $a->notes,
+                ]);
+            }
+        });
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
+
+        return response($csv, 200, [
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="assets-' . date('Ymd') . '.csv"',
+        ]);
+    }
+
     public function read(int $id)
     {
         return $this->ok(self::present($this->find($id)));

@@ -25,6 +25,8 @@ return [
     'invalid_totp'           => 'Invalid 2FA secret (Base32 secret or otpauth:// link required)',
     'vault_locked'           => 'The vault is locked. Enter your password to unlock.',
     'resource_vault'         => 'vault items',
+    'import_too_many'        => 'At most {:max} rows per import',
+    'import_quota'           => 'This import adds {:need} items but your plan allows {:left} more. Import fewer or upgrade.',
     'email_taken'            => 'This email is already registered',
     'too_many_attempts'      => 'Too many attempts, try again in 10 minutes',
     'login_failed'           => 'Incorrect email or password',

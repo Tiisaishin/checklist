@@ -2,9 +2,17 @@
   <div class="page">
     <div class="page-header">
       <h2>{{ t('asset.title') }}</h2>
-      <n-button type="primary" @click="openForm()" :disabled="!auth.canWrite">
-        <template #icon><n-icon><AddOutline /></n-icon></template>{{ t('asset.add') }}
-      </n-button>
+      <n-space>
+        <n-button @click="exportCsv">
+          <template #icon><n-icon><DownloadOutline /></n-icon></template>{{ t('importer.export') }}
+        </n-button>
+        <n-button @click="importVisible = true" :disabled="!auth.canWrite">
+          <template #icon><n-icon><CloudUploadOutline /></n-icon></template>{{ t('importer.button') }}
+        </n-button>
+        <n-button type="primary" @click="openForm()" :disabled="!auth.canWrite">
+          <template #icon><n-icon><AddOutline /></n-icon></template>{{ t('asset.add') }}
+        </n-button>
+      </n-space>
     </div>
 
     <div class="toolbar">
@@ -22,6 +30,7 @@
       :scroll-x="1030" size="small" @update:page="changePage"
     />
 
+    <ImportWizard v-model:show="importVisible" :groups="groups" @done="load" />
     <AssetForm v-model:show="formVisible" :asset="editing" :groups="groups" :channels="channels" @saved="onSaved" @groups-changed="loadGroups" />
 
     <n-modal v-model:show="detailVisible" preset="card" :title="t('asset.detectInfo')" style="max-width: 560px">
@@ -41,13 +50,14 @@ import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { NButton, NDropdown, NIcon, NTag, NTooltip } from 'naive-ui'
-import { AddOutline, EllipsisHorizontal, CheckmarkCircleOutline, AlertCircleOutline } from '@vicons/ionicons5'
-import { api, confirmDelete, message } from '../utils/api'
+import { AddOutline, DownloadOutline, CloudUploadOutline, EllipsisHorizontal, CheckmarkCircleOutline, AlertCircleOutline } from '@vicons/ionicons5'
+import { api, confirmDelete, message, download } from '../utils/api'
 import { fmt, fmtDate } from '../utils/time'
 import { useAuth } from '../stores/auth'
 import DaysTag from '../components/DaysTag.vue'
 import AssetForm from '../components/AssetForm.vue'
 import GroupTag from '../components/GroupTag.vue'
+import ImportWizard from '../components/ImportWizard.vue'
 
 const { t } = useI18n()
 const auth = useAuth()
@@ -60,6 +70,7 @@ const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 })
 const groups = ref([])
 const channels = ref([])
 const formVisible = ref(false)
+const importVisible = ref(false)
 const editing = ref(null)
 const detailVisible = ref(false)
 const detail = ref(null)
@@ -157,6 +168,11 @@ async function renew(r) {
   await api.post(`/api/assets/${r.id}/renew`)
   message.success(t('asset.renewTip'))
   load()
+}
+
+function exportCsv() {
+  const qs = new URLSearchParams({ status: filters.status, type: filters.type || '', group_id: filters.group_id || '' })
+  download(`/api/assets/export?${qs}`, `assets-${new Date().toISOString().slice(0, 10)}.csv`)
 }
 
 function showDetail(r) {

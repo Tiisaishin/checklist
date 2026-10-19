@@ -17,6 +17,8 @@ class Asset extends BaseModel
 
     protected $type = [
         'group_id'        => 'integer',
+        'parent_id'       => 'integer',
+        'import_batch_id' => 'integer',
         'auto_detect'     => 'boolean',
         'auto_renew'      => 'boolean',
         'remind_overdue'  => 'boolean',

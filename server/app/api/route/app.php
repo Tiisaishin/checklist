@@ -47,6 +47,12 @@ Route::group(function () {
     Route::put('groups/:id', 'Group/update');
     Route::delete('groups/:id', 'Group/delete');
 
+    Route::get('imports', 'Import/index');
+    Route::post('imports', 'Import/save');
+    Route::get('imports/:id', 'Import/read');
+    Route::delete('imports/:id', 'Import/delete');
+
+    Route::get('assets/export', 'Asset/export');
     Route::get('assets', 'Asset/index');
     Route::post('assets', 'Asset/save');
     Route::get('assets/:id', 'Asset/read');

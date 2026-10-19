@@ -12,7 +12,7 @@ use think\facade\Db;
 use Throwable;
 
 /**
- * 调度器：每分钟执行提醒；每 10 分钟投递自动探测；每天清理过期令牌。
+ * 调度器：每分钟执行提醒、投递自动探测；每天清理过期令牌。
  *   php think checklist:schedule          执行一次（配合系统 cron 每分钟调用）
  *   php think checklist:schedule --loop   常驻进程（Docker 中使用）
  */
@@ -42,18 +42,16 @@ class Schedule extends Command
 
     private function tick(Output $output): void
     {
-        $minute = (int) gmdate('i');
         try {
             $sent = (new ReminderService())->run();
             if ($sent) {
                 $output->writeln(gmdate('[Y-m-d H:i:s]') . " reminders queued: {$sent}");
             }
 
-            if ($minute % 10 === 0) {
-                $count = DetectService::dispatchDue();
-                if ($count) {
-                    $output->writeln(gmdate('[Y-m-d H:i:s]') . " detections queued: {$count}");
-                }
+            // 每分钟投递到期需要探测的资产（新导入的会被优先处理）
+            $count = DetectService::dispatchDue();
+            if ($count) {
+                $output->writeln(gmdate('[Y-m-d H:i:s]') . " detections queued: {$count}");
             }
 
             if (gmdate('H:i') === '03:00') {

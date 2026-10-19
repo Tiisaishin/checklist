@@ -63,3 +63,20 @@ export function confirmDelete(onOk) {
     onPositiveClick: onOk,
   })
 }
+
+/** 带登录信息下载文件 */
+export async function download(url, filename) {
+  const headers = { 'Think-Lang': i18n.global.locale.value }
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (token) headers.Authorization = `Bearer ${token}`
+  const tenant = localStorage.getItem('tenant')
+  if (tenant) headers['X-Tenant-Id'] = tenant
+  const res = await fetch(url, { headers })
+  if (!res.ok) { message.error(`HTTP ${res.status}`); return }
+  const blob = await res.blob()
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+}

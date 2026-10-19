@@ -57,7 +57,7 @@ class DetectService
     /**
      * 按套餐的探测间隔，把到期需要探测的资产投递到队列
      */
-    public static function dispatchDue(int $limit = 200): int
+    public static function dispatchDue(int $limit = 100): int
     {
         $intervals = Plan::column('detect_interval', 'id');
         $plans     = Tenant::column('plan_id', 'id');
@@ -69,7 +69,8 @@ class DetectService
             ->where(function ($q) {
                 $q->whereNull('last_detect_time')->whereOr('last_detect_time', '<=', now_utc('-30 minutes'));
             })
-            ->order('last_detect_time', 'asc')
+            // 从未探测过的（如刚导入）排在最前
+            ->orderRaw('CASE WHEN last_detect_time IS NULL THEN 0 ELSE 1 END, last_detect_time ASC')
             ->limit($limit * 3)
             ->select();
 

@@ -27,6 +27,8 @@ return [
     'invalid_totp'           => '两步验证密钥格式不正确（需要 Base32 密钥或 otpauth:// 链接）',
     'vault_locked'           => '保险箱已锁定，请输入登录密码解锁',
     'resource_vault'         => '保险箱条目',
+    'import_too_many'        => '单次最多导入 {:max} 条',
+    'import_quota'           => '本次将新增 {:need} 条，当前套餐还可以添加 {:left} 条，请减少数量或升级套餐',
     'email_taken'            => '该邮箱已注册',
     'too_many_attempts'      => '尝试次数过多，请 10 分钟后再试',
     'login_failed'           => '邮箱或密码错误',
